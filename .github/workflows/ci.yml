@@ -1,0 +1,43 @@
+name: CI
+
+# Chạy khi:
+# - Push vào main hoặc dev (kiểm tra sau khi merge)
+# - Mở/cập nhật Pull Request nhắm vào main hoặc dev (kiểm tra trước khi merge)
+# Nhánh phụ (feature/*, fix/*...) tạo từ dev không cần khai báo riêng —
+# chỉ cần mở PR vào dev là workflow này tự chạy.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm run test --if-present
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
