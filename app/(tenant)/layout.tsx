@@ -8,8 +8,8 @@ export default async function TenantLayout({ children }: { children: React.React
   await requireRolePage("tenant");
 
   return (
-    <div className="min-h-screen bg-neutral-50 pb-16 md:pb-0">
-      <header className="sticky top-0 z-10 bg-white">
+    <div className="min-h-screen bg-neutral-50 pb-16 md:pb-0 print:bg-white print:pb-0">
+      <header className="sticky top-0 z-10 bg-white print:hidden">
         <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3 md:px-6">
           <span className="font-semibold text-neutral-900">BoardingHouseMaster</span>
           <div className="flex items-center gap-1">
@@ -22,7 +22,7 @@ export default async function TenantLayout({ children }: { children: React.React
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-6 md:px-6">{children}</main>
+      <main className="mx-auto max-w-2xl px-4 py-6 md:px-6 print:max-w-none print:p-0">{children}</main>
 
       <TenantNav />
     </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/types/database";
@@ -10,7 +9,6 @@ import { upsertBankInfo } from "./actions";
 type BankInfo = Database["public"]["Tables"]["bank_info"]["Row"];
 
 export function BankInfoForm({ bankInfo }: { bankInfo: BankInfo | null }) {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -28,7 +26,6 @@ export function BankInfoForm({ bankInfo }: { bankInfo: BankInfo | null }) {
         accountName: String(fd.get("accountName") ?? ""),
       });
       setSaved(true);
-      router.refresh();
     } finally {
       setIsPending(false);
     }

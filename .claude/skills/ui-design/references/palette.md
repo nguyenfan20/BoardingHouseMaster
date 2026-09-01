@@ -5,40 +5,49 @@ Single source of truth for color. Always consume colors through these token name
 component, and never reach for Tailwind's built-in `green-*`/`gray-*`/`red-*` scale, so
 retuning the palette later only ever means editing this file + `tailwind.config.ts`.
 
-## Brand green (`brand-*`)
+## Brand palette — chosen by the project owner (2026-08-31)
 
-Primary/action color. Chosen to be a fresher, slightly more muted green than Tailwind's
-stock `green-600` so it doesn't read as "default Bootstrap success color."
+Four colors were specified directly: primary `#546B41` (dark olive green) and three
+supporting tones `#99AD7A` (sage), `#DCCCAC` (tan), `#FFF8EC` (cream). This reads warmer and
+earthier than a typical SaaS green — more "boarding house / lived-in" than "tech dashboard."
+Every other step in the scale below is *derived* from these four (documented so it's
+reproducible, not arbitrary): the `brand-*` darker/lighter steps are simple tint/shade mixes
+of the primary and secondary green, and the `neutral-*` scale reuses the tan/cream instead of
+cool grays so borders and backgrounds stay in the same warm family as the brand color.
 
-| Token | Hex | Use |
-|---|---|---|
-| `brand-50` | `#F1F9F4` | Page-level tinted backgrounds (e.g. a highlighted stat card) |
-| `brand-100` | `#DCF0E3` | Badge/pill backgrounds, hover background for ghost buttons on brand elements |
-| `brand-200` | `#B7E1C4` | Borders on brand-tinted surfaces |
-| `brand-500` | `#2CA463` | Icons, links, focus ring color |
-| `brand-600` | `#178A54` | **Primary button fill, active nav item, primary text links** |
-| `brand-700` | `#106B41` | Hover/active state for primary buttons |
-| `brand-900` | `#0B4A2C` | Text-on-brand-50 when you need strong contrast (rare) |
+### `brand-*` (greens)
 
-## Neutrals (`neutral-*`)
+| Token | Hex | Source | Use |
+|---|---|---|---|
+| `brand-50` | `#F5F7F2` | 90% white + 10% `#99AD7A` | Page-level tinted backgrounds (e.g. a highlighted stat card) |
+| `brand-100` | `#E6EBDE` | 75% white + 25% `#99AD7A` | Badge/pill backgrounds, hover background for ghost buttons on brand elements |
+| `brand-200` | `#CCD6BD` | 50% white + 50% `#99AD7A` | Borders on brand-tinted surfaces |
+| `brand-400` | `#99AD7A` | **given directly** | Secondary accent — active nav background, softer badges |
+| `brand-500` | `#7D9363` | 60% `#99AD7A` + 40% `#546B41` | Icons, links, focus ring color |
+| `brand-600` | `#546B41` | **given directly — PRIMARY** | Primary button fill, active nav item, primary text links |
+| `brand-700` | `#435634` | `#546B41` darkened 20% | Hover/active state for primary buttons |
+| `brand-900` | `#2E3B24` | `#546B41` darkened 45% | Text-on-brand-50 when you need strong contrast (rare) |
 
-All body text, borders, and non-brand backgrounds. This is the workhorse scale — most of
-any screen should be neutral, with brand green reserved for the one or two things that
-should draw the eye (see SKILL.md §1, "one accent per screen").
+### `neutral-*` (warm, not cool gray)
 
-| Token | Hex | Use |
-|---|---|---|
-| `neutral-50` | `#FAFAF9` | App background (behind cards) |
-| `neutral-100` | `#F3F3F1` | Subtle section backgrounds, table row hover |
-| `neutral-200` | `#E4E4E1` | Default border color |
-| `neutral-400` | `#A3A29E` | Placeholder text, disabled text |
-| `neutral-600` | `#57564F` | Secondary body text, labels |
-| `neutral-900` | `#1C1B18` | Primary body text, headings |
+| Token | Hex | Source | Use |
+|---|---|---|---|
+| `neutral-50` | `#FFF8EC` | **given directly (cream)** | App background (behind cards) |
+| `neutral-100` | `#FBF1E2` | 85% `#FFF8EC` + 15% `#DCCCAC` | Subtle section backgrounds, table row hover |
+| `neutral-200` | `#DCCCAC` | **given directly (tan)** | Default border color |
+| `neutral-400` | `#BBAD92` | `#DCCCAC` darkened 15% | Placeholder text, disabled text |
+| `neutral-600` | `#635C4D` | `#DCCCAC` darkened 55% | Secondary body text, labels |
+| `neutral-900` | `#1A1915` | `#DCCCAC` darkened 88% | Primary body text, headings |
+
+Cards stay pure `bg-white` (not a neutral token) — white-on-cream is what gives cards their
+subtle lift off the page background; don't swap card backgrounds to `neutral-50` or they'll
+merge into the page.
 
 ## Semantic colors
 
-Kept visually distinct from brand green so a status badge is never ambiguous with "this is
-just another green thing."
+Kept visually distinct from the brand greens so a status badge is never ambiguous with "this
+is just another green thing." Not derived from the 4 brand colors on purpose — these need to
+read as functionally different hues (amber/red/blue), not more shades of olive.
 
 | Purpose | Token | Hex | Notes |
 |---|---|---|---|
@@ -60,21 +69,22 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#F1F9F4",
-          100: "#DCF0E3",
-          200: "#B7E1C4",
-          500: "#2CA463",
-          600: "#178A54",
-          700: "#106B41",
-          900: "#0B4A2C",
+          50: "#F5F7F2",
+          100: "#E6EBDE",
+          200: "#CCD6BD",
+          400: "#99AD7A",
+          500: "#7D9363",
+          600: "#546B41",
+          700: "#435634",
+          900: "#2E3B24",
         },
         neutral: {
-          50: "#FAFAF9",
-          100: "#F3F3F1",
-          200: "#E4E4E1",
-          400: "#A3A29E",
-          600: "#57564F",
-          900: "#1C1B18",
+          50: "#FFF8EC",
+          100: "#FBF1E2",
+          200: "#DCCCAC",
+          400: "#BBAD92",
+          600: "#635C4D",
+          900: "#1A1915",
         },
         warning: { 50: "#FEF3E2", 600: "#B45309" },
         error: { 50: "#FEF2F2", 600: "#DC2626" },
@@ -101,3 +111,13 @@ invoices.status):
 | `approved` / `paid` | `brand-50` bg, `brand-700` text | "Đã duyệt" / "Đã thanh toán" |
 | `pending` / `unpaid` | `warning-50` bg, `warning-600` text | "Chờ duyệt" / "Chưa thanh toán" |
 | `rejected` | `error-50` bg, `error-600` text | "Từ chối" |
+
+## Inline SVG illustrations
+
+Illustrations (`components/illustrations.tsx`) use hardcoded hex fills, not Tailwind classes
+(SVG `fill`/`stroke` attributes don't resolve Tailwind's CSS variables the same way). When
+retuning the palette, update both this file's table above **and** the hex values inside
+`components/illustrations.tsx` — search for the old hex values to find every spot. Current
+mapping used there: `#F5F7F2`→brand-50 shapes, `#E6EBDE`→brand-100 shapes, `#CCD6BD`→brand-200
+outlines, `#7D9363`→brand-500 accents, `#546B41`→brand-600 primary strokes/fills,
+`#FFF8EC`/`#FBF1E2`→neutral-50/100 "paper" shapes, `#DCCCAC`→neutral-200 outlines.

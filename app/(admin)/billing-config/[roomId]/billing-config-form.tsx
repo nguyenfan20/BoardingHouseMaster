@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Database, WaterCalcType } from "@/types/database";
@@ -16,14 +15,15 @@ const WATER_CALC_OPTIONS: { value: WaterCalcType; label: string }[] = [
 ];
 
 export function BillingConfigForm({ roomId, config }: { roomId: string; config: BillingConfig }) {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const [hasDualMeter, setHasDualMeter] = useState(config.has_dual_meter);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setSaved(false);
     const fd = new FormData(e.currentTarget);
 
     setIsPending(true);
@@ -41,7 +41,7 @@ export function BillingConfigForm({ roomId, config }: { roomId: string; config: 
         setError(result.error ?? "Có lỗi xảy ra.");
         return;
       }
-      router.refresh();
+      setSaved(true);
     } finally {
       setIsPending(false);
     }
@@ -120,6 +120,7 @@ export function BillingConfigForm({ roomId, config }: { roomId: string; config: 
       </label>
 
       {error && <p className="text-sm text-error-600">{error}</p>}
+      {saved && <p className="text-sm text-brand-700">Đã lưu.</p>}
 
       <Button type="submit" isLoading={isPending}>
         Lưu

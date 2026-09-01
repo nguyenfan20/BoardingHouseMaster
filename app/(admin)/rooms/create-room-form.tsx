@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { RoomType, WaterCalcType } from "@/types";
@@ -20,7 +19,6 @@ const WATER_CALC_OPTIONS: { value: WaterCalcType; label: string }[] = [
 ];
 
 export function CreateRoomForm({ onDone }: { onDone: () => void }) {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +37,6 @@ export function CreateRoomForm({ onDone }: { onDone: () => void }) {
         waterCalcType: fd.get("waterCalcType") as WaterCalcType,
         waterRate: Number(fd.get("waterRate")),
       });
-      router.refresh();
       onDone();
     } catch {
       setError("Không thể tạo phòng. Vui lòng thử lại.");

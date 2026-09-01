@@ -19,6 +19,52 @@ Format mỗi entry:
 
 ---
 
+## 2026-08-31 — Palette màu mới, tách thuế trong hóa đơn, tải PDF, dọn `router.refresh()` thừa
+
+- **Đổi palette màu** theo yêu cầu chủ dự án: chủ đạo `#546B41` (olive xanh rêu), phụ
+  `#99AD7A` (sage), `#DCCCAC` (tan — border/neutral-200), `#FFF8EC` (cream — nền trang/
+  neutral-50). Chuyển từ tông xanh lá mát (SaaS) sang tông ấm hơn. Cập nhật
+  `tailwind.config.ts`, `.claude/skills/ui-design/references/palette.md` (bảng công thức
+  pha màu để tái lập được), `SKILL.md`, và toàn bộ hex cứng trong `components/illustrations.tsx`
+  + ví dụ minh hoạ trong `components.md`.
+- **Tách thuế điện riêng trong hóa đơn tenant** (`(tenant)/invoices/[invoiceId]`): trước đây
+  "Tiền điện" gộp luôn thuế/phụ thu vào 1 dòng (`totalElectric`), giờ tách 2 dòng riêng
+  ("Tiền điện (x kWh)" = tiền gốc, "Thuế điện (y%)" hoặc "Phụ thu 2 đồng hồ (y%)" tuỳ loại
+  phòng) — dữ liệu đã có sẵn trong `breakdown.electricity.tax`/`.surcharge`, chỉ là chưa
+  hiển thị tách bạch.
+- **Thiết kế lại trang chi tiết hóa đơn** thành 1 card "hóa đơn" thống nhất (header HÓA ĐƠN
+  TIỀN TRỌ + tên phòng + tháng + trạng thái, bảng chi tiết, QR nằm CHUNG trong card thay vì
+  tách rời phía trên như trước).
+- **Thêm "Tải hóa đơn (PDF)"**: dùng `window.print()` + CSS `print:` (Tailwind variant) thay
+  vì thư viện tạo PDF phía client (đã thử `jspdf` rồi gỡ) — font PDF chuẩn của các thư viện
+  đó thiếu dấu tiếng Việt, in trình duyệt dùng font hệ thống nên luôn đúng, và trình duyệt
+  hiện đại có sẵn tuỳ chọn "Save as PDF" trong hộp thoại in. Pattern ghi trong
+  `components.md` để tái dùng cho các trang khác sau này.
+- **Dọn `router.refresh()` thừa** ở 5 form (billing-config, bank-info, create-room,
+  meter-input, extra-fees declare) — mỗi Server Action tương ứng đã tự `revalidatePath()`,
+  Next tự động refetch RSC sau khi action chạy xong; gọi thêm `router.refresh()` phía client
+  tạo ra 1 request đua với request tự động đó (thấy `net::ERR_ABORTED` trong Network tab dù
+  request đầu vẫn 200 và dữ liệu đã lưu đúng — không mất dữ liệu, nhưng gây khó chịu khi debug).
+
+**Về báo lỗi "POST /rooms/... 200 in 215ms" khi lưu cấu hình tính tiền**: đã tái hiện trực
+tiếp trên browser (đăng nhập admin, sửa `billing-config/[roomId]`, bấm Lưu) và xác nhận
+KHÔNG có lỗi thật — dòng log đó là log truy cập bình thường của Next dev server cho một
+request THÀNH CÔNG (status 200), không phải thông báo lỗi. Dữ liệu lưu đúng (kiểm tra lại
+bằng cách load lại trang, giá trị mới vẫn còn). Đường dẫn `/rooms/...` trong log không khớp
+route `/billing-config/...` hiện tại — có thể do log cũ từ trước khi trang chi tiết phòng
+được xây thêm nội dung, hoặc dán nhầm dòng log. Đã dọn `router.refresh()` thừa như trên để
+giảm nhiễu log dù không phải nguyên nhân gốc.
+
+**Vì sao:** Yêu cầu người dùng — đổi màu theo bộ nhận diện đã chốt; hóa đơn cần minh bạch
+thuế để tenant không thắc mắc; QR cần nằm trong ngữ cảnh hóa đơn thay vì rời rạc; cần xuất
+được hóa đơn dạng file.
+**File liên quan:** `tailwind.config.ts`, `.claude/skills/ui-design/`,
+`components/illustrations.tsx`, `app/(tenant)/invoices/[invoiceId]/`, `app/globals.css`,
+`app/(tenant)/layout.tsx`, `components/tenant-nav.tsx`,
+`app/(admin)/billing-config/[roomId]/billing-config-form.tsx`,
+`app/(admin)/bank-info/bank-info-form.tsx`, `app/(admin)/rooms/create-room-form.tsx`,
+`app/(tenant)/meter-input/meter-input-form.tsx`, `app/(tenant)/extra-fees/declare-form.tsx`.
+
 ## 2026-08-31 — Sửa 2 bug phát hiện khi người dùng test tay: lặp chữ "Tháng" + crash khi đăng nhập
 
 - **Lặp chữ "Tháng tháng 08, 2026"**: `Date#toLocaleDateString("vi-VN", {month:"2-digit",

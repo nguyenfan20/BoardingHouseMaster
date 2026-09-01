@@ -168,11 +168,11 @@ one small accent circle in `brand-600`. Keep it geometric, not literal/detailed.
 function NoRoomsIllustration() {
   return (
     <svg viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="20" y="80" width="160" height="70" rx="8" fill="#F1F9F4" />
-      <rect x="50" y="60" width="100" height="90" rx="6" fill="#FAFAF9" stroke="#E4E4E1" strokeWidth="2" />
-      <path d="M40 65 L100 20 L160 65" stroke="#178A54" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <rect x="85" y="100" width="30" height="50" rx="3" fill="#DCF0E3" />
-      <circle cx="150" cy="45" r="10" fill="#2CA463" />
+      <rect x="20" y="80" width="160" height="70" rx="8" fill="#F5F7F2" />
+      <rect x="50" y="60" width="100" height="90" rx="6" fill="#FFFFFF" stroke="#DCCCAC" strokeWidth="2" />
+      <path d="M40 65 L100 20 L160 65" stroke="#546B41" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <rect x="85" y="100" width="30" height="50" rx="3" fill="#E6EBDE" />
+      <circle cx="150" cy="45" r="10" fill="#7D9363" />
     </svg>
   );
 }
@@ -181,16 +181,37 @@ function NoRoomsIllustration() {
 function NoInvoicesIllustration() {
   return (
     <svg viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="55" y="20" width="90" height="120" rx="8" fill="#FAFAF9" stroke="#E4E4E1" strokeWidth="2" />
-      <rect x="70" y="40" width="60" height="8" rx="4" fill="#DCF0E3" />
-      <rect x="70" y="58" width="60" height="8" rx="4" fill="#F3F3F1" />
-      <rect x="70" y="76" width="40" height="8" rx="4" fill="#F3F3F1" />
-      <circle cx="145" cy="115" r="26" fill="#178A54" />
+      <rect x="55" y="20" width="90" height="120" rx="8" fill="#FFFFFF" stroke="#DCCCAC" strokeWidth="2" />
+      <rect x="70" y="40" width="60" height="8" rx="4" fill="#E6EBDE" />
+      <rect x="70" y="58" width="60" height="8" rx="4" fill="#FBF1E2" />
+      <rect x="70" y="76" width="40" height="8" rx="4" fill="#FBF1E2" />
+      <circle cx="145" cy="115" r="26" fill="#546B41" />
       <path d="M133 115 L142 124 L158 106" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
 ```
+
+## "Tải PDF" qua in trình duyệt (không dùng thư viện tạo PDF)
+
+Khi cần xuất PDF một trang/khối nội dung (hóa đơn, biên nhận...), dùng `window.print()` +
+CSS `@media print`/Tailwind `print:` variant thay vì một thư viện tạo PDF phía client như
+jsPDF. Lý do: font PDF chuẩn (Helvetica/Times) của các thư viện đó không có đủ dấu tiếng
+Việt (chữ có dấu bị vỡ/mất), trong khi in trình duyệt dùng font thật của hệ điều hành nên
+luôn đúng — và trình duyệt hiện đại (Chrome/Edge) mặc định có tuỳ chọn "Save as PDF" trong
+hộp thoại in, nên trải nghiệm với người dùng vẫn là "tải file PDF".
+
+```tsx
+// component nút bấm
+<Button variant="secondary" onClick={() => window.print()}>Tải hóa đơn (PDF)</Button>
+```
+
+Ẩn mọi phần chrome (header, nav, nút bấm) khi in bằng class `print:hidden` ở đúng những
+component đó — không cố gắng ẩn qua `id` từ một chỗ tập trung, vì header/nav thường nằm ở
+layout cha khác file với nội dung cần in. Phần nội dung muốn giữ lại khi in thì bỏ padding/
+max-width ràng buộc bằng `print:p-0 print:max-w-none` ở `<main>`. Xem ví dụ đầy đủ ở
+`app/(tenant)/layout.tsx` + `app/(tenant)/invoices/[invoiceId]/page.tsx` +
+`app/globals.css` (`@page { margin: ... }` để chỉnh lề trang in).
 
 ## Admin shell skeleton
 

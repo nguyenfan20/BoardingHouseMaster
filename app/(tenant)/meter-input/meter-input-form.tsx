@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { Database, WaterCalcType } from "@/types/database";
@@ -23,7 +22,6 @@ export function MeterInputForm({
   meterReadings: MeterReading[];
   waterReading: WaterReading | null;
 }) {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -56,7 +54,6 @@ export function MeterInputForm({
       }
 
       setSaved(true);
-      router.refresh();
     } finally {
       setIsPending(false);
     }

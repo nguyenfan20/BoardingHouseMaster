@@ -18,8 +18,8 @@ description: >
 
 House style for this project, decided by the project owner. The goal is a calm, modern,
 minimal admin/tenant web app that doesn't look like generic Bootstrap — generous white
-space, a confident green brand color, and hand-drawn-feeling flat illustrations instead of
-stock photos or 3D renders.
+space, a warm olive-green/tan/cream brand palette (not a cool tech-SaaS green), and
+hand-drawn-feeling flat illustrations instead of stock photos or 3D renders.
 
 Read `references/palette.md` before writing any color-related Tailwind classes or editing
 `tailwind.config.ts` — it has the full hex palette and the ready-to-paste Tailwind config.
@@ -40,20 +40,23 @@ illustrations — it has copy-pasteable patterns already themed to this palette.
   reach for `text-4xl`+ outside a page hero. Body text is `text-sm` (14px) as the default
   for tables/forms, `text-base` for prose, headings step up by one Tailwind size at a time
   (`text-lg` → `text-xl` → `text-2xl`), and page titles top out around `text-2xl font-semibold`.
-- **One accent per screen.** Green is the brand color, not a decoration — use it for the
-  primary action, active nav state, and key numbers/badges. Everything else on the screen
-  should be neutral gray/white so the green actually draws the eye. Resist the urge to
-  green-tint every icon and label; that flattens the hierarchy it's supposed to create.
+- **One accent per screen.** Olive green (`brand-600`) is the brand color, not a decoration
+  — use it for the primary action, active nav state, and key numbers/badges. Everything else
+  on the screen should be neutral (white cards on the cream `neutral-50` page background) so
+  the green actually draws the eye. Resist the urge to green-tint every icon and label; that
+  flattens the hierarchy it's supposed to create.
 - **Radius**: `rounded-lg` (8px) is the default for cards, inputs, and buttons across the
   app — keep it consistent instead of mixing radii per component.
 
 ## 2. Color
 
-Full palette + Tailwind config is in `references/palette.md`. Summary: primary green
-`brand-600` (#178A54) for primary actions and active states, `brand-50`/`brand-100` for
-light green backgrounds/badges, neutral grays for all text and borders, and separate
-semantic colors for warning/error so they never get confused with the brand green (an
-"error" or "pending" badge must never accidentally read as another shade of green).
+Full palette + Tailwind config is in `references/palette.md`. Summary: primary olive green
+`brand-600` (#546B41) for primary actions and active states, sage `brand-400` (#99AD7A) as
+the secondary accent, `brand-50`/`brand-100` for light green-tinted backgrounds/badges, a
+**warm** neutral scale built from tan `#DCCCAC` (borders) and cream `#FFF8EC` (page
+background) instead of cool grays, and separate semantic colors for warning/error so they
+never get confused with the brand green (an "error" or "pending" badge must never
+accidentally read as another shade of green).
 
 Always reference colors through the `brand-*` and `neutral-*` Tailwind tokens defined in
 `tailwind.config.ts` (see palette.md) — don't hardcode hex values or reach for Tailwind's

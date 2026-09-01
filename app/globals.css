@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* In hóa đơn (nút "Tải hóa đơn (PDF)" gọi window.print()) — layout chrome tự ẩn qua
+   class `print:hidden` ở các component liên quan (xem app/(tenant)/layout.tsx,
+   app/(tenant)/invoices/[invoiceId]/page.tsx). Chỉ cần reset margin trang in ở đây. */
+@media print {
+  @page {
+    margin: 16mm;
+  }
+}

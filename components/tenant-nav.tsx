@@ -14,7 +14,7 @@ export function TenantNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-neutral-200 bg-white md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-neutral-200 bg-white print:hidden md:hidden">
       {NAV_ITEMS.map((item) => {
         const active = pathname === item.href;
         return (
@@ -38,7 +38,7 @@ export function TenantTopTabs() {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden gap-1 border-b border-neutral-200 md:flex">
+    <nav className="hidden gap-1 border-b border-neutral-200 print:hidden md:flex">
       {NAV_ITEMS.map((item) => {
         const active = pathname === item.href;
         return (

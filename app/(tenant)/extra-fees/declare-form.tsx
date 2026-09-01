@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { declareExtraFee } from "./actions";
@@ -12,7 +11,6 @@ function currentMonthIso() {
 }
 
 export function DeclareExtraFeeForm() {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +32,6 @@ export function DeclareExtraFeeForm() {
         return;
       }
       (e.target as HTMLFormElement).reset();
-      router.refresh();
     } finally {
       setIsPending(false);
     }
