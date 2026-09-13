@@ -9,6 +9,8 @@ import type {
   ExtraFeeItem,
   ExtraFeesBreakdown,
   InvoiceBreakdown,
+  OtherFeeItem,
+  OtherFeesBreakdown,
   SingleMeterInput,
   WaterInput,
 } from "./types";
@@ -19,6 +21,7 @@ export interface CalculateInvoiceInput {
     | { meterType: "single"; input: SingleMeterInput }
     | { meterType: "dual"; input: DualMeterInput };
   water: WaterInput;
+  otherFees?: OtherFeeItem[];
   extraFees: ExtraFeeItem[];
 }
 
@@ -30,26 +33,40 @@ function calculateElectricity(
     : calculateDualMeterElectricity(electricity.input);
 }
 
-function calculateExtraFees(fees: ExtraFeeItem[]): ExtraFeesBreakdown {
-  const approved = fees.filter((f) => f.status === "approved");
+function calculateOtherFees(fees?: OtherFeeItem[]): OtherFeesBreakdown {
+  const items = (fees ?? []).filter((f) => f.name.trim() && f.amount > 0);
   return {
-    items: approved.map(({ feeName, amount, note }) => ({ feeName, amount, note })),
-    extraFeesTotal: approved.reduce((sum, f) => sum + f.amount, 0),
+    items,
+    otherFeesTotal: items.reduce((sum, f) => sum + f.amount, 0),
+  };
+}
+
+function calculateExtraFees(fees: ExtraFeeItem[]): ExtraFeesBreakdown {
+  const approved = fees.filter((f) => f.status === "approved" && f.amount != null);
+  return {
+    items: approved.map(({ feeName, amount, note }) => ({ feeName, amount: amount!, note })),
+    extraFeesTotal: approved.reduce((sum, f) => sum + (f.amount ?? 0), 0),
   };
 }
 
 export function calculateInvoice(input: CalculateInvoiceInput): InvoiceBreakdown {
   const electricity = calculateElectricity(input.electricity);
   const water = calculateWater(input.water);
+  const otherFees = calculateOtherFees(input.otherFees);
   const extraFees = calculateExtraFees(input.extraFees);
   const totalAmount =
-    input.basePrice + electricity.totalElectric + water.water + extraFees.extraFeesTotal;
+    input.basePrice +
+    electricity.totalElectric +
+    water.water +
+    otherFees.otherFeesTotal +
+    extraFees.extraFeesTotal;
 
   const rateInput = input.electricity.input;
   return {
     basePrice: input.basePrice,
     electricity,
     water,
+    otherFees,
     extraFees,
     totalAmount,
     ratesSnapshot: {

@@ -46,4 +46,26 @@ describe("calculateInvoice", () => {
     expect(result.extraFees.extraFeesTotal).toBe(0);
     expect(result.totalAmount).toBeCloseTo(392500);
   });
+
+  it("tính toán đúng khi có chi phí khác cố định (otherFees)", () => {
+    const result = calculateInvoice({
+      basePrice: 3000000,
+      electricity: {
+        meterType: "single",
+        input: { oldIndex: 200, newIndex: 250, electricityRate: 3500, electricityTaxPercent: 0 },
+      },
+      water: { calcType: "fixed", waterRate: 100000 },
+      otherFees: [
+        { name: "Tiền rác", amount: 30000 },
+        { name: "Internet / Wifi", amount: 50000 },
+        { name: "Gửi xe", amount: 100000 },
+      ],
+      extraFees: [{ feeName: "Sửa vòi nước", amount: 70000, status: "approved" }],
+    });
+
+    expect(result.otherFees?.otherFeesTotal).toBe(180000);
+    expect(result.otherFees?.items).toHaveLength(3);
+    // 3,000,000 + (50 * 3500) + 100,000 + 180,000 + 70,000 = 3,525,000
+    expect(result.totalAmount).toBe(3000000 + 175000 + 100000 + 180000 + 70000);
+  });
 });

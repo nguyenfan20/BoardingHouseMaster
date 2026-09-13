@@ -10,52 +10,146 @@ description: >
   screen — even if they don't mention "design system" explicitly. Also consult it before
   writing any Tailwind classes, any `tailwind.config.ts` color/token change, or any new
   shadcn/ui component variant in this repo, so output stays consistent with the house
-  style: modern minimalism, green primary color, flat illustrations, mobile-first
-  responsive layout.
+  style: modern minimal, warm olive-green palette, claymorphic hero sections, flat
+  illustrations, mobile-first responsive layout.
 ---
 
 # UI Design — BoardingHouseMaster
 
 House style for this project, decided by the project owner. The goal is a calm, modern,
-minimal admin/tenant web app that doesn't look like generic Bootstrap — generous white
-space, a warm olive-green/tan/cream brand palette (not a cool tech-SaaS green), and
-hand-drawn-feeling flat illustrations instead of stock photos or 3D renders.
+minimal admin/tenant web app — clean breathing room, a warm olive-green/tan/cream brand
+palette, claymorphic hero sections for visual warmth and personality, and hand-drawn-
+feeling flat illustrations instead of stock photos or 3D renders.
 
 Read `references/palette.md` before writing any color-related Tailwind classes or editing
 `tailwind.config.ts` — it has the full hex palette and the ready-to-paste Tailwind config.
 Read `references/components.md` before building buttons, inputs, tables, empty states, or
 illustrations — it has copy-pasteable patterns already themed to this palette.
 
-## 1. Aesthetic: modern minimalism
+---
 
-- **White space over borders.** Prefer spacing (`gap-6`, `p-6`, `space-y-4`) and subtle
-  background differences (`bg-neutral-50` vs `bg-white`) to separate sections, rather than
-  drawing a border or shadow around everything. When you do need a boundary, use one thin
-  `border-neutral-200` and nothing heavier — no double borders, no drop shadows stacked on
-  borders.
-- **Restrained shadows.** At most `shadow-sm` for cards that need to lift off the page
-  (e.g. a modal, a dropdown). Dashboard cards on a light background usually don't need a
-  shadow at all — a `border-neutral-200` is enough.
-- **Type scale stays small.** This is a data-heavy admin tool, not a marketing site — don't
-  reach for `text-4xl`+ outside a page hero. Body text is `text-sm` (14px) as the default
-  for tables/forms, `text-base` for prose, headings step up by one Tailwind size at a time
-  (`text-lg` → `text-xl` → `text-2xl`), and page titles top out around `text-2xl font-semibold`.
-- **One accent per screen.** Olive green (`brand-600`) is the brand color, not a decoration
-  — use it for the primary action, active nav state, and key numbers/badges. Everything else
-  on the screen should be neutral (white cards on the cream `neutral-50` page background) so
-  the green actually draws the eye. Resist the urge to green-tint every icon and label; that
-  flattens the hierarchy it's supposed to create.
-- **Radius**: `rounded-lg` (8px) is the default for cards, inputs, and buttons across the
-  app — keep it consistent instead of mixing radii per component.
+## 1. Aesthetic: modern minimal
 
-## 2. Color
+The "modern minimal" style for this project means clarity through restraint — every
+element earns its place. Less decoration, more hierarchy through space, scale, and color.
+
+- **White space is structure.** Prefer spacing (`gap-6`, `p-6`, `space-y-4`) and subtle
+  background shifts (`bg-neutral-50` vs `bg-white`) to separate sections. Borders are a
+  last resort — when you do need one, use a single `border-neutral-200` line; no double
+  borders, no stacked shadows.
+- **Restrained shadows.** `shadow-sm` only when something genuinely floats above the
+  surface (modal, dropdown, floating action button). Dashboard cards on a light background
+  need nothing heavier than a `border-neutral-200`. Shadow is depth, not decoration.
+- **Precise type scale.** This is a data-heavy admin tool, not a marketing site:
+  - Body / table / form labels: `text-sm` (14 px)
+  - Prose paragraphs: `text-base`
+  - Section headings step up one size at a time: `text-lg` → `text-xl` → `text-2xl`
+  - Page titles cap at `text-2xl font-semibold` (except hero sections — see §2)
+  - Never reach for `text-4xl`+ outside a deliberately styled hero
+- **One accent per screen.** Olive green (`brand-600`) is a signal, not a decoration — use
+  it for the primary action, active nav state, and key metric numbers. Everything else stays
+  neutral so the green actually draws the eye. Avoid green-tinting every icon/label; that
+  collapses the hierarchy it's meant to create.
+- **Consistent radius.** `rounded-xl` (12 px) as the default across cards, inputs, and
+  buttons. Use `rounded-2xl` or `rounded-3xl` only for clay-style hero blobs and large
+  decorative shapes (see §2). Never mix radii arbitrarily per component.
+- **Micro-motion, not animation theatre.** Transitions are `duration-150 ease-out` for
+  state changes (hover, focus). Reserve `duration-300` for layout-level transitions
+  (sidebar open/close, modal enter). No infinite looping animations on functional UI.
+
+---
+
+## 2. Hero sections: claymorphism
+
+Hero sections — the top "welcome" band on the admin dashboard, the login/register screens,
+the tenant portal landing — use a **claymorphism** visual style to inject warmth and
+personality while the rest of the UI stays minimal.
+
+### What claymorphism means here
+
+Claymorphism combines **soft 3-D depth** with **pastel color blobs** and **rounded-everything**
+shapes to feel tactile and friendly — think inflated clay shapes, not flat or glassmorphic.
+Key properties:
+
+| Property | Value / approach |
+|---|---|
+| Background | Creamy base (`brand-50` / `#FFF8EC`) with one or two large soft blobs |
+| Blob colors | Muted pastels from the brand palette: `brand-100`, `brand-200`, sage `#C7D9A8` |
+| Blob shape | `border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%` — asymmetric organic curve |
+| Depth shadow | Multi-layer: `box-shadow: 6px 6px 12px rgba(84,107,65,.15), inset 2px 2px 6px rgba(255,255,255,.7)` |
+| Highlight | Subtle white glint on top-left edge via an inset shadow |
+| Cards / pills | Large radii `rounded-3xl`, creamy fill `bg-white/70` — solid soft fills, no backdrop-blur |
+| Typography | Hero heading may step up to `text-3xl font-bold` or `text-4xl font-extrabold`, neutral-900 |
+| Illustrations | Flat SVG placed inside or beside the clay blob, never on a plain white card |
+
+### Implementation recipe (Tailwind + inline style)
+
+```tsx
+{/* Hero section wrapper */}
+<section className="relative overflow-hidden rounded-3xl bg-brand-50 px-8 py-12 md:px-16 md:py-20">
+
+  {/* Blob 1 — large background shape */}
+  <div
+    className="pointer-events-none absolute -top-16 -left-12 h-72 w-72 bg-brand-100 opacity-70"
+    style={{
+      borderRadius: "60% 40% 30% 70% / 60% 30% 70% 40%",
+      boxShadow: "6px 6px 12px rgba(84,107,65,.12), inset 2px 2px 6px rgba(255,255,255,.65)",
+    }}
+  />
+
+  {/* Blob 2 — smaller accent blob */}
+  <div
+    className="pointer-events-none absolute -bottom-10 right-8 h-48 w-48 bg-brand-200 opacity-50"
+    style={{
+      borderRadius: "40% 60% 70% 30% / 40% 50% 60% 50%",
+      boxShadow: "4px 4px 10px rgba(84,107,65,.10), inset 1px 1px 4px rgba(255,255,255,.6)",
+    }}
+  />
+
+  {/* Content */}
+  <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+      <p className="mb-2 text-sm font-medium uppercase tracking-widest text-brand-600">
+        Quản lý nhà trọ
+      </p>
+      <h1 className="text-3xl font-bold leading-tight text-neutral-900">
+        Xin chào, <span className="text-brand-600">chủ nhà</span> 👋
+      </h1>
+      <p className="mt-2 max-w-md text-base text-neutral-500">
+        Tổng quan hoạt động hôm nay của bạn.
+      </p>
+    </div>
+    {/* Flat SVG illustration beside text */}
+    <div className="max-w-[180px] shrink-0">{/* inline SVG here */}</div>
+  </div>
+</section>
+```
+
+### Rules for clay hero sections
+
+1. **One hero per page.** The claymorphic section is the opening anchor of the page. Below
+   it, the rest of the page reverts to clean minimal cards and tables.
+2. **Two blobs maximum.** One large (60-80 % of hero height), one small accent. More than
+   two makes the background noisy.
+3. **Pastels only.** Blobs stay within the `brand-50` / `brand-200` range. Never use a
+   saturated `brand-600` blob — that kills the softness.
+4. **No glassmorphism mix.** Don't add `backdrop-blur` or `bg-white/10` inside a clay
+   section. Clay uses solid soft fills and layered `box-shadow` for depth, not transparency.
+5. **Vary blob shapes per screen.** Rotate the `border-radius` percentages between pages so
+   each screen has its own organic shape, but keep the shadow recipe consistent.
+6. **Mobile sizing.** Reduce blob sizes by ~40 % on small screens (`h-28 w-28` instead of
+   `h-72 w-72`). Keep the hero `py` at `py-10` minimum so it reads as a hero, not a banner.
+
+---
+
+## 3. Color
 
 Full palette + Tailwind config is in `references/palette.md`. Summary: primary olive green
 `brand-600` (#546B41) for primary actions and active states, sage `brand-400` (#99AD7A) as
-the secondary accent, `brand-50`/`brand-100` for light green-tinted backgrounds/badges, a
-**warm** neutral scale built from tan `#DCCCAC` (borders) and cream `#FFF8EC` (page
-background) instead of cool grays, and separate semantic colors for warning/error so they
-never get confused with the brand green (an "error" or "pending" badge must never
+the secondary accent, `brand-50`/`brand-100` for light green-tinted backgrounds and clay
+blobs, a **warm** neutral scale built from tan `#DCCCAC` (borders) and cream `#FFF8EC`
+(page background) instead of cool grays, and separate semantic colors for warning/error so
+they never get confused with the brand green (an "error" or "pending" badge must never
 accidentally read as another shade of green).
 
 Always reference colors through the `brand-*` and `neutral-*` Tailwind tokens defined in
@@ -63,23 +157,29 @@ Always reference colors through the `brand-*` and `neutral-*` Tailwind tokens de
 default `green-*`/`gray-*` scale, so the palette stays a single source of truth that's easy
 to retune later.
 
-## 3. Illustrations
+---
+
+## 4. Illustrations
 
 Use flat, geometric, undraw.co-style illustrations (2-4 flat color fills, no gradients, no
 outlines-as-3D, no photos) recolored into the `brand-*` green palette plus one or two
-neutral tones. Reserve them for moments that benefit from warmth: empty states (no rooms
-yet, no invoices yet, no notifications), the login/register screens, and one hero spot on
-the admin dashboard — not scattered decoratively across every page.
+neutral tones. Place them:
+- Inside clay hero sections (beside or overlapping the heading)
+- Empty states (no rooms yet, no invoices yet, no notifications)
+- Login / register screens
+
+Not scattered decoratively across every page.
 
 This environment can't reliably fetch external illustration assets at build time, so the
 default approach is **hand-built inline SVG**, sized to sit inside a `max-w-[240px]`
-container above the empty-state text. `references/components.md` has a ready-to-use
-`<EmptyState>` pattern plus two example inline SVG illustrations (empty room list, empty
-invoice list) in the brand palette — copy their construction (a handful of overlapping
-rounded shapes + one accent circle) when you need a new one rather than inventing a new
-visual language per screen.
+container. `references/components.md` has a ready-to-use `<EmptyState>` pattern plus two
+example inline SVG illustrations (empty room list, empty invoice list) in the brand palette
+— copy their construction (a handful of overlapping rounded shapes + one accent circle)
+when you need a new one rather than inventing a new visual language per screen.
 
-## 4. Layout shells
+---
+
+## 5. Layout shells
 
 This app has two distinct audiences with different device habits — design each shell for
 its primary device, then make it work on the other:
@@ -98,7 +198,9 @@ its primary device, then make it work on the other:
 
 See `references/components.md` for the shell skeletons.
 
-## 5. Responsive rules (mobile-first)
+---
+
+## 6. Responsive rules (mobile-first)
 
 Write every layout mobile-first (unprefixed classes = smallest screen, add `sm:`/`md:`/`lg:`
 to expand), and check these concrete breakpoints:
@@ -116,7 +218,9 @@ with `overflow-x-auto` — on a phone that produces a tiny unreadable table the 
 pinch-zoom, which fails the "tenant checks their bill on their phone" use case this app is
 built around. Use the card-collapse pattern from `references/components.md` instead.
 
-## 6. Components & states
+---
+
+## 7. Components & states
 
 Base all interactive components (button, input, select, badge, table) on shadcn/ui so
 behavior (focus trapping, keyboard nav, accessibility) is solid, then theme them to the
@@ -126,22 +230,16 @@ Every button and input needs all of these states defined, not just default+hover
 half-finished component (works on hover, forgets focus-visible) is worse than a plain
 unstyled one because it looks broken instead of unstyled:
 
-- **default** — brand-600 fill for primary buttons, neutral-200 border for secondary/inputs
-- **hover** — one step darker (`brand-700`) for primary, `neutral-50` background for
-  secondary/ghost buttons
-- **active/pressed** — one step darker still, or a slight `scale-[0.98]` on buttons for
-  tactile feedback
-- **focus-visible** — a visible `ring-2 ring-brand-500 ring-offset-2` — never remove the
-  focus ring without replacing it, this is an internal tool real people use with keyboards
-- **disabled** — `opacity-50 cursor-not-allowed`, no hover/active changes underneath
-- **loading** — for async actions (Server Action pending), swap label for a small spinner
-  and keep the button's width stable so the layout doesn't jump
-- **empty** — use the illustration pattern from §3, always pair the illustration with one
-  sentence explaining what's missing and, where relevant, a primary action to fix it (e.g.
-  empty rooms list → illustration + "Chưa có phòng nào" + "Thêm phòng" button)
-- **error** (forms) — red border + a one-line message directly under the field, not just a
-  toast the user might miss; keep the red (`error-600`) separate from the brand green so a
-  validation error never visually reads as "still fine, still green"
+| State | Spec |
+|---|---|
+| **default** | `brand-600` fill for primary buttons; `neutral-200` border for secondary/inputs |
+| **hover** | One step darker (`brand-700`) for primary; `neutral-50` background for secondary/ghost |
+| **active/pressed** | One step darker still, or `scale-[0.98]` for tactile feedback |
+| **focus-visible** | `ring-2 ring-brand-500 ring-offset-2` — never remove without replacing |
+| **disabled** | `opacity-50 cursor-not-allowed`, no hover/active changes underneath |
+| **loading** | Swap label for a small spinner, keep button width stable so layout doesn't jump |
+| **empty** | Illustration (§4) + one-sentence explanation + primary action where relevant |
+| **error** (forms) | Red border + inline message under the field; red (`error-600`) must never read as green |
 
 `references/components.md` has full markup for buttons, inputs, badges, the table→card
 pattern, and the empty-state pattern described above — start from those instead of writing

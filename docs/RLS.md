@@ -50,8 +50,8 @@ $$ language sql stable security definer;
 
 - SELECT: admin tất cả; tenant chỉ của phòng mình.
 - INSERT: admin luôn được (tạo với status tự chọn); tenant chỉ được tạo với
-  `room_id = my_room_id()` **và** `status = 'pending'` (không tự set approved) —enforce bằng
-  `with check` trong policy.
+  `room_id = my_room_id()`, `created_by = auth.uid()` **và** `status in ('declared', 'pending')`
+  (không tự set approved) — enforce bằng `with check` trong policy (cập nhật ở migration 0004).
 - UPDATE: chỉ admin (duyệt/từ chối = update status/reviewed_by/reviewed_at). Tenant không được
   sửa fee đã tạo (muốn sửa thì tạo dòng mới, tránh sửa sau khi admin đã duyệt).
 - DELETE: chỉ admin.
@@ -74,6 +74,13 @@ $$ language sql stable security definer;
   này qua client RLS. Việc kiểm tra token hợp lệ và tạo tài khoản chạy hoàn toàn trong
   Server Action bằng `service_role` client (bypass RLS), vì bản thân hành động "kiểm tra +
   tạo user + đánh dấu đã dùng" phải atomic và không thể expose qua client thường.
+
+## `parking_requests`
+
+- SELECT: admin tất cả; tenant chỉ của phòng mình (`room_id = my_room_id()`).
+- INSERT: admin luôn được; tenant chỉ với `room_id = my_room_id()` **và** `created_by = auth.uid()`.
+- UPDATE: chỉ admin.
+- DELETE: admin tất cả; tenant chỉ dòng của phòng mình do chính mình tạo (nút "Hủy" ở trang Gửi xe).
 
 ## `notifications`
 

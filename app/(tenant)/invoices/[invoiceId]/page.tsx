@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
@@ -33,20 +34,32 @@ export default async function TenantInvoiceDetailPage({ params }: { params: Prom
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between print:hidden">
-        <h1 className="text-2xl font-semibold text-neutral-900">Hóa đơn</h1>
+      <div className="flex items-center justify-between gap-2 print:hidden">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/invoices"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+            title="Quay lại danh sách"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+          </Link>
+          <h1 className="text-xl sm:text-2xl font-semibold text-neutral-900">Chi tiết hóa đơn</h1>
+        </div>
         <DownloadInvoiceButton />
       </div>
 
       {/* Toàn bộ khối dưới đây là nội dung được in khi bấm "Tải hóa đơn" — xem globals.css @media print. */}
-      <div id="invoice-print-area" className="rounded-lg border border-neutral-200 bg-white p-6 print:border-0 print:p-0">
+      <div id="invoice-print-area" className="rounded-xl border border-neutral-200 bg-white p-4 sm:p-6 print:border-0 print:p-0">
         <div className="flex items-start justify-between border-b border-neutral-200 pb-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-neutral-600">Hóa đơn tiền trọ</p>
             <h2 className="mt-1 text-xl font-semibold text-neutral-900">{room?.name ?? "—"}</h2>
             <p className="mt-0.5 text-sm text-neutral-600">Tháng {formatMonthLabel(invoice.month)}</p>
           </div>
-          <Badge status={invoice.status}>{invoice.status === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}</Badge>
+          <Badge status={invoice.status as "paid" | "unpaid"}>{invoice.status === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}</Badge>
         </div>
 
         <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_auto]">
@@ -55,8 +68,11 @@ export default async function TenantInvoiceDetailPage({ params }: { params: Prom
             <Row label={`Tiền điện (${breakdown.electricity.consumedKwh} kWh)`} value={formatVnd(breakdown.electricity.electricity)} />
             {tax.amount > 0 && <Row label={tax.label} value={formatVnd(tax.amount)} />}
             <Row label="Tiền nước" value={formatVnd(breakdown.water.water)} />
+            {breakdown.otherFees?.items?.map((item, i) => (
+              <Row key={`other-${i}`} label={item.name} value={formatVnd(item.amount)} />
+            ))}
             {breakdown.extraFees.items.map((item, i) => (
-              <Row key={i} label={item.feeName} value={formatVnd(item.amount)} />
+              <Row key={`extra-${i}`} label={item.feeName} value={formatVnd(item.amount)} />
             ))}
             <div className="!mt-4 flex justify-between border-t border-neutral-200 pt-3 text-base font-semibold text-neutral-900">
               <span>Tổng cộng</span>

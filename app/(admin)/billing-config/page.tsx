@@ -56,6 +56,16 @@ export default async function AdminBillingConfigPage() {
                     </dd>
                     <dt>Tính nước</dt>
                     <dd className="text-neutral-900">{WATER_CALC_LABEL_VI[cfg.water_calc_type]}</dd>
+                    <dt>Chi phí khác</dt>
+                    <dd className="text-neutral-900">
+                      {Array.isArray(cfg.other_fees) && cfg.other_fees.length > 0
+                        ? `${(cfg.other_fees as { name: string; amount: number }[])
+                            .reduce((sum, f) => sum + (Number(f.amount) || 0), 0)
+                            .toLocaleString("vi-VN")} đ (${cfg.other_fees.length} mục)`
+                        : "Không"}
+                    </dd>
+                    <dt>Ngày chốt tiền</dt>
+                    <dd className="text-neutral-900">Ngày {cfg.billing_day} hằng tháng</dd>
                     <dt>Tenant tự nhập chỉ số</dt>
                     <dd className="text-neutral-900">{cfg.allow_tenant_meter_input ? "Có" : "Không"}</dd>
                   </dl>

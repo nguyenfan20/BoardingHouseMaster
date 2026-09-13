@@ -68,9 +68,9 @@ export interface WaterBreakdown {
 
 export interface ExtraFeeItem {
   feeName: string;
-  amount: number;
+  amount: number | null;
   note?: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "declared" | "pending" | "approved" | "rejected";
 }
 
 export interface ExtraFeesBreakdown {
@@ -78,10 +78,21 @@ export interface ExtraFeesBreakdown {
   extraFeesTotal: number;
 }
 
+export interface OtherFeeItem {
+  name: string;
+  amount: number;
+}
+
+export interface OtherFeesBreakdown {
+  items: OtherFeeItem[];
+  otherFeesTotal: number;
+}
+
 export interface InvoiceBreakdown {
   basePrice: number;
   electricity: ElectricityBreakdown;
   water: WaterBreakdown;
+  otherFees?: OtherFeesBreakdown;
   extraFees: ExtraFeesBreakdown;
   totalAmount: number;
   ratesSnapshot: {

@@ -27,15 +27,24 @@ export default async function TenantInvoicesPage() {
             <li key={invoice.id}>
               <Link
                 href={`/invoices/${invoice.id}`}
-                className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white p-4 hover:border-brand-200"
+                className="group flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white p-4 transition-all hover:border-brand-300 hover:shadow-sm active:bg-neutral-50"
               >
-                <div>
-                  <p className="font-medium text-neutral-900">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-neutral-900 group-hover:text-brand-700">
                     Tháng {formatMonthLabel(invoice.month)}
                   </p>
-                  <p className="text-sm text-neutral-600">{invoice.total_amount.toLocaleString("vi-VN")} đ</p>
+                  <p className="mt-0.5 text-sm font-medium text-neutral-600">
+                    {invoice.total_amount.toLocaleString("vi-VN")} đ
+                  </p>
                 </div>
-                <Badge status={invoice.status}>{invoice.status === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge status={invoice.status as "paid" | "unpaid"}>
+                    {invoice.status === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}
+                  </Badge>
+                  <svg className="h-4 w-4 text-neutral-400 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </div>
               </Link>
             </li>
           ))}

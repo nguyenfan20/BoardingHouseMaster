@@ -1,6 +1,7 @@
 import { getInviteByToken } from "./actions";
 import { RegisterForm } from "./register-form";
 import { AuthIllustration } from "@/components/illustrations";
+import { LiveDateTime } from "@/components/live-date-time";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,9 @@ export default async function RegisterPage({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
+      <div className="mb-3 flex justify-center">
+        <LiveDateTime variant="card" />
+      </div>
       <div className="mx-auto mb-6 w-full max-w-[200px]">
         <AuthIllustration />
       </div>

@@ -41,6 +41,8 @@ Map 1-1 với `auth.users` của Supabase Auth.
 | water_calc_type | text | `'per_person' \| 'fixed' \| 'per_m3'` |
 | water_rate | numeric | ý nghĩa phụ thuộc water_calc_type |
 | **allow_tenant_meter_input** | **boolean** | **default false — cờ per-room, bật thì tenant được tự nhập `meter_readings`/`water_readings` của phòng mình (xem Quyết định #3)** |
+| other_fees | jsonb | default `'[]'` — chi phí cố định hằng tháng `[{name, amount}]` |
+| **billing_day** | **int** | **default 1, check 1..28 — ngày chốt số/lập hóa đơn của riêng phòng này (Quyết định #7)** |
 | updated_at | timestamptz | default now() |
 
 > Ràng buộc nghiệp vụ (không phải constraint DB, enforce ở `/lib/billing`): chỉ MỘT trong hai
@@ -148,6 +150,30 @@ Trạng thái link (tính, không lưu cột riêng — suy ra khi hiển thị)
 > null and expires_at > now()` trước khi tạo tài khoản, trong cùng transaction/thao tác với
 > việc set `used_at`/`used_by`, để tránh race condition dùng link 2 lần cùng lúc.
 
+## Bảng: `parking_requests` (mới — Quyết định #8)
+
+Tenant đăng ký gửi xe: biển số + thời điểm, để admin biết trước mà sắp xếp chỗ. Hiển thị ở
+dashboard admin (mục "Đăng ký gửi xe sắp tới").
+
+| Cột | Kiểu | Ghi chú |
+|---|---|---|
+| id | uuid PK | default gen_random_uuid() |
+| room_id | uuid FK → rooms.id on delete cascade | |
+| created_by | uuid FK → auth.users.id on delete set null | tenant đã đăng ký |
+| plate_number | text | biển số, lưu dạng UPPERCASE đã trim |
+| scheduled_at | timestamptz | thời điểm gửi xe |
+| note | text, nullable | VD "xe máy 110cc, gửi qua đêm" |
+| created_at | timestamptz | default now() |
+
+> Không có cột `status`/duyệt — đây chỉ là thông báo trước cho admin, không phải luồng phê
+> duyệt. Tenant xoá được đăng ký của chính mình (hủy), admin xoá được mọi đăng ký.
+>
+> **Lưu trữ 30 ngày**: dashboard admin chỉ hiện đăng ký `scheduled_at >= now()`; đăng ký đã qua
+> giờ hẹn nằm ở trang `(admin)/parking-requests`, và dòng có `scheduled_at < now() - 30 ngày` bị
+> xoá. Việc xoá chạy lazy mỗi lần admin mở trang đó (không dùng pg_cron — xem comment
+> `ponytail:` trong `app/(admin)/parking-requests/page.tsx`), nên bảng không phình vô hạn mà
+> cũng không cần hạ tầng job chạy nền.
+
 ## Bảng: `notifications` (mới — Quyết định #1)
 
 Thông báo cho tenant/admin khi extra_fee được duyệt/từ chối, hóa đơn mới, v.v. Xem NOTIFICATIONS.md.
@@ -181,3 +207,12 @@ Thông báo cho tenant/admin khi extra_fee được duyệt/từ chối, hóa đ
 5. **Link đăng ký dùng 1 lần, hết hạn 7 ngày**: mỗi link chỉ tạo được đúng 1 tài khoản, admin
    tạo link mới nếu phòng cần thêm tenant (xem [CONTEXT.md](../CONTEXT.md) entry tương ứng).
 6. **Tenant tự đặt mật khẩu** khi đăng ký qua link — admin không cần biết/truyền mật khẩu.
+
+## Quyết định từ Q&A (2026-09-13, vòng 3 — ngày chốt tiền + gửi xe)
+
+7. **Ngày chốt tiền theo từng phòng**: `billing_config.billing_day` (1..28, giới hạn 28 để
+   tháng 2 cũng luôn có ngày đó). Không có bảng lịch riêng — kỳ hóa đơn suy ra bằng pure
+   function `billingMonthFor(billingDay, today)` trong `lib/billing/billing-cycle.ts`.
+8. **`parking_requests` không có bước duyệt**: tenant đăng ký → admin thấy ngay ở dashboard +
+   nhận `notifications` type `general`. Không thêm type notification mới để khỏi phải đổi
+   check constraint của `notifications.type`.

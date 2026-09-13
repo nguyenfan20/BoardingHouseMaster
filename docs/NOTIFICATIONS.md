@@ -11,6 +11,8 @@
 | Admin từ chối extra_fee | `extra_fees.created_by` | `extra_fee_rejected` | "Phụ phí '<fee_name>' bị từ chối" |
 | Hóa đơn tháng mới được tạo | mọi user có `room_id` = phòng đó | `invoice_created` | "Hóa đơn tháng <month> đã sẵn sàng" |
 | Admin đánh dấu hóa đơn đã thanh toán | mọi user có `room_id` = phòng đó | `invoice_paid` | "Hóa đơn tháng <month> đã thanh toán" |
+| Tenant khai báo extra_fee | mọi user `role = 'admin'` | `general` | "Phụ phí mới từ <room>" |
+| Tenant đăng ký gửi xe | mọi user `role = 'admin'` | `general` | "Đăng ký gửi xe — <room> (<biển số>)" |
 
 ## Nơi tạo
 

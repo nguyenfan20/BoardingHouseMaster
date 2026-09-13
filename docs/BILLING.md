@@ -117,9 +117,26 @@ generateInvoice(roomId, month):
      - ngược lại → upsert breakdown/total_amount/qr_url, giữ status hiện có (không tự đổi paid→unpaid)
 ```
 
+## 7b. Kỳ tính tiền theo ngày chốt riêng của phòng
+
+`billing_config.billing_day` (1..28) là ngày trong tháng mà phòng đó được chốt số và lập hóa đơn.
+Pure function trong `lib/billing/billing-cycle.ts`:
+
+```
+billingMonthFor(billingDay, today) -> "YYYY-MM-01"
+  today.getDate() >= billingDay  → kỳ = tháng của today
+  today.getDate() <  billingDay  → kỳ = tháng trước (kỳ hiện tại chưa tới ngày chốt)
+normalizeBillingDay(day) -> kẹp về 1..28 (28 để tháng 2 cũng luôn có ngày này)
+```
+
+Dùng ở hai nơi (không ảnh hưởng công thức tiền, chỉ chọn `month`):
+- Form "Tạo / cập nhật hóa đơn" ở `(admin)/rooms/[roomId]` — giá trị mặc định của ô tháng.
+- Dashboard admin — liệt kê phòng đã tới ngày chốt mà kỳ đó chưa có `invoices`.
+
 ## 8. Unit test bắt buộc (trước khi build UI — mục 9.4 PROJECT.md)
 
 File `lib/billing/__tests__/`:
 - `calculate-electricity.test.ts`: phòng thường có thuế; 2 đồng hồ + phụ thu (mặt bằng); 2 đồng hồ + thuế (phòng thường 2 đồng hồ); trường hợp cả hai = 0.
 - `calculate-water.test.ts`: cả 3 loại `per_person` / `fixed` / `per_m3`.
 - `generate-invoice.test.ts`: tổng hợp đầy đủ, có/không extra_fees pending bị loại, upsert khi đã có invoice unpaid, chặn khi invoice đã paid.
+- `billing-cycle.test.ts`: kẹp `billing_day`, kỳ trước/sau ngày chốt, lùi qua mốc năm.

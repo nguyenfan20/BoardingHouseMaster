@@ -19,6 +19,147 @@ Format mỗi entry:
 
 ---
 
+## 2026-09-13 — Admin nhập được chỉ số điện/nước (trước đó tắt quyền tenant là bế tắc)
+
+- **Lỗ hổng**: `billing_config.allow_tenant_meter_input = false` thì tenant không thấy trang nhập
+  chỉ số, mà phía admin CHƯA có chỗ nào nhập — không bảng nào trong app ghi `meter_readings`/
+  `water_readings` ngoài trang tenant (`upsertMeterReading`/`upsertWaterReading` trong
+  SERVER_ACTIONS.md chỉ là dự kiến, chưa có code). Hệ quả: phòng tắt cờ đó thì `generateInvoiceForRoom`
+  luôn trả "Thiếu chỉ số điện của tháng này" và không bao giờ tạo được hóa đơn.
+- **Thêm 2 Server Action** `upsertMeterReadingAsAdmin` / `upsertWaterReadingAsAdmin` trong
+  `app/(admin)/rooms/[roomId]/actions.ts` (`recorded_by = 'admin'`, upsert theo unique key sẵn có,
+  validate `new_index >= old_index`) + mục **"Chỉ số điện / nước"** ở trang chi tiết phòng, nằm
+  TRƯỚC mục Hóa đơn: chọn tháng (mặc định theo `billing_day` của phòng, giống ô tháng của form tạo
+  hóa đơn), nhập 1 hoặc 2 đồng hồ tuỳ `has_dual_meter`, có thêm phần nước nếu `water_calc_type =
+  'per_m3'`. Chỉ số cũ tự gợi ý bằng chỉ số mới của tháng gần nhất trước đó.
+- Quyền của admin KHÔNG phụ thuộc `allow_tenant_meter_input` — cờ đó chỉ mở thêm quyền cho tenant
+  (SCHEMA.md Quyết định #3). Đã ghi rõ câu này trong help text của checkbox ở `billing-config`.
+- Form dùng `key={month}` để remount khi đổi tháng — `defaultValue` của input không tự cập nhật
+  theo prop, nếu không remount thì đổi tháng vẫn hiện số của tháng cũ.
+- **Kiểm tra**: lint/typecheck/test/build sạch. Upsert test bằng psql với JWT admin: insert rồi
+  upsert lần 2 ghi đè đúng (`new_index` 150 → 180, `recorded_by='admin'`), `water_readings` tương tự.
+
+**Vì sao:** người dùng báo "chọn tenant không tự nhập số điện thì trang phòng không có chỗ admin
+nhập chỉ số" — đúng, và nó chặn luôn cả việc tạo hóa đơn cho phòng đó.
+**File liên quan:** `app/(admin)/rooms/[roomId]/{actions.ts,page.tsx,meter-reading-section.tsx}`,
+`app/(admin)/billing-config/[roomId]/billing-config-form.tsx`, `docs/SERVER_ACTIONS.md`.
+
+## 2026-09-13 — Xem tài khoản đã đăng ký của từng phòng + chẩn đoán build fail ngẫu nhiên
+
+- **Mục "Tài khoản đã đăng ký" ở `(admin)/rooms/[roomId]`**: liệt kê mọi user có `room_id` = phòng
+  đó (họ tên, email, điện thoại, thời điểm đăng ký) — table ở `md+`, card ở mobile. Một phòng có
+  thể có nhiều tài khoản (Quyết định #2, SCHEMA.md) nên đây là danh sách, không phải 1 dòng.
+- **Email lấy qua Admin API**, không phải từ bảng `users`: email chỉ nằm ở `auth.users`, nên trang
+  gọi `createServiceRoleClient().auth.admin.listUsers()` một lần rồi map theo id. Trang đã nằm sau
+  `requireRolePage("admin")` của layout, và bọc `try/catch` để lỗi Admin API chỉ làm mất cột email
+  chứ không sập trang.
+- **Chẩn đoán được build fail ngẫu nhiên** (đã gặp ở 2 lượt trước và tưởng là race của Windows):
+  `next build` luôn probe route Pages Router `/_app` qua `getDefinedNamedExports`
+  (`node_modules/next/dist/build/index.js:1142`), promise này được tạo sớm nhưng chỉ await muộn;
+  project này không có thư mục `pages/` nên nó reject ngay → nếu reject xảy ra trước khi handler
+  kịp gắn, Node coi là unhandledRejection và giết build. Đây là bug của Next 14 với project
+  app-router-only, không liên quan code dự án: cùng một commit build lại là pass (đã xác nhận
+  fail/pass xen kẽ với code y nguyên). Cách xử lý hiện tại: build lại. Nếu về sau muốn hết hẳn thì
+  nâng Next lên 15.
+
+**Vì sao:** người dùng cần xem phòng nào đã có tài khoản nào (đối chiếu với link mời đã phát).
+**File liên quan:** `app/(admin)/rooms/[roomId]/page.tsx`.
+
+## 2026-09-13 — Trang lịch sử đăng ký xe cho admin + tự xoá sau 30 ngày
+
+- **Trang mới `(admin)/parking-requests`** ("Lịch sử đăng ký xe", có trong admin nav): liệt kê các
+  đăng ký `scheduled_at < now()` (đã qua giờ hẹn), table ở `md+` và card ở mobile theo đúng pattern
+  bắt buộc của ui-design skill. Dashboard vẫn chỉ hiện đăng ký sắp tới, thêm link "Xem lịch sử →".
+- **Tự xoá sau 30 ngày**: trang lịch sử `delete ... lt('scheduled_at', now - 30 ngày)` ngay trong
+  Server Component trước khi query danh sách — dọn kiểu lazy mỗi lần admin mở trang, không dùng
+  `pg_cron`/job chạy nền (nhà trọ 1 admin, không cần hạ tầng nền; có comment `ponytail:` ghi rõ
+  trần của cách này và đường nâng cấp). RLS cho admin xoá mọi dòng nên không cần service-role key.
+- **Kiểm tra**: lint/typecheck/test/build sạch. Test mốc 30 ngày bằng psql với JWT của admin:
+  dòng 40 ngày bị xoá, dòng 29 ngày và dòng sắp tới còn nguyên, trang lịch sử chỉ lấy dòng đã qua.
+
+**Vì sao:** yêu cầu người dùng — dashboard chỉ để xem việc sắp phải làm, lịch sử tách sang trang
+riêng và không giữ quá 30 ngày.
+**File liên quan:** `app/(admin)/parking-requests/page.tsx`, `app/(admin)/dashboard/page.tsx`,
+`components/admin-nav.tsx`, `docs/SCHEMA.md`, `docs/SERVER_ACTIONS.md`.
+
+## 2026-09-13 — Thông báo đọc được: chuông có badge + trang /notifications, thêm thông báo hóa đơn mới
+
+- **Chuông thông báo giờ hoạt động thật**: `components/notification-bell.tsx` từ icon tĩnh (có
+  TODO từ trước) thành Server Component đọc count `is_read = false` bằng RLS của chính user
+  (không cần service-role key), hiện badge số (>9 → "9+") và link tới `/notifications`.
+- **Trang `/notifications` dùng chung cho cả 2 role**: đặt ngoài route group `(admin)`/`(tenant)`
+  vì hai group không thể cùng khai báo route `/notifications` (Next báo lỗi parallel pages trùng
+  path) — trang tự `getCurrentProfile()` + redirect `/login`, có link "Quay lại" về home theo role.
+  Click 1 thông báo → `markNotificationRead(id)` rồi điều hướng theo `related_table`/`related_id`
+  (map đích khác nhau giữa admin và tenant), kèm nút "Đánh dấu tất cả đã đọc" để badge không
+  treo vĩnh viễn với thông báo không có đích để bấm.
+- **`generateInvoiceForRoom` tạo notification `invoice_created`** cho mọi user của phòng khi hóa
+  đơn được tạo MỚI (dựa vào biến `existing` đã query sẵn để không báo lại mỗi lần bấm cập nhật)
+  — đúng như docs/SERVER_ACTIONS.md và NOTIFICATIONS.md đã đặc tả nhưng code còn thiếu. Thêm
+  `revalidatePath("/invoices")` để danh sách hóa đơn phía tenant cũng mới theo.
+- **Kiểm tra**: lint/typecheck/test/build sạch. RLS `notifications` test bằng psql với JWT claims
+  thật: tenant chỉ select/đếm thông báo của mình, update thông báo của người khác trả 0 dòng,
+  "đánh dấu tất cả" chỉ ảnh hưởng dòng của mình.
+
+**Ghi chú khi build trên máy này:** dev server đang chạy giữ `.next` nên `next build` lỗi
+`EPERM: .next	race`. Cách làm: tạm đặt `distDir: ".next-verify"` trong `next.config.mjs`, build,
+rồi trả lại config + `git checkout -- tsconfig.json` (Next tự thêm `.next-verify/types` vào
+`include` của tsconfig). Trong lúc đó có gặp build fail kiểu
+`unhandledRejection PageNotFoundError: Cannot find module for page: /_document` ở bước
+"Collecting page data" — xem chẩn đoán chính xác ở entry "Xem tài khoản đã đăng ký..." bên trên:
+đây là bug của Next 14 với project chỉ dùng App Router, mang tính ngẫu nhiên theo thời điểm,
+KHÔNG phải lỗi code của mình.
+
+**Vì sao:** người dùng yêu cầu bít 2 lỗ hổng đã báo ở lượt trước — thông báo được ghi vào DB
+(phụ phí, gửi xe, hóa đơn đã thanh toán) nhưng không ai đọc được, và thiếu thông báo khi có hóa
+đơn mới.
+**File liên quan:** `components/notification-bell.tsx`, `app/notifications/{page.tsx,actions.ts,notification-list.tsx}`,
+`app/(admin)/rooms/[roomId]/actions.ts`, `docs/SERVER_ACTIONS.md`.
+
+## 2026-09-13 — Ngày chốt tiền theo phòng, đăng ký gửi xe, sửa menu mobile admin
+
+- **Sửa responsive admin**: dưới `md` sidebar bị `hidden` nên tên user + nút **Đăng xuất** (thứ duy
+  nhất chỉ sống trong sidebar) mất hẳn trên điện thoại — drawer hamburger chỉ render `<AdminNav>`.
+  Nay drawer render đủ header + nav + tên user + đăng xuất, `AdminMobileMenu` nhận prop `userName`.
+  Cùng lớp lỗi đã sửa cho tenant ngày 2026-08-31, lần này ở phía admin.
+- **Ngày chốt tiền/lập hóa đơn riêng cho từng phòng**: thêm `billing_config.billing_day`
+  (int, default 1, check 1..28) + pure function `lib/billing/billing-cycle.ts`
+  (`billingMonthFor`, `normalizeBillingDay`, `billingCycleDate`) có unit test. Admin đổi ở
+  `billing-config/[roomId]` (mục 4 của form), thấy lại ở danh sách `billing-config`. Logic dùng
+  ở 2 nơi: ô "Tháng lập hóa đơn" trong `rooms/[roomId]` mặc định theo kỳ đang chốt (chưa tới
+  ngày chốt → vẫn là kỳ tháng trước), và dashboard admin liệt kê phòng đã tới ngày chốt mà kỳ
+  đó chưa có hóa đơn ("Cần tạo hóa đơn" + stat card thứ 4).
+- **Chức năng mới "Gửi xe"**: bảng `parking_requests` (room_id, created_by, plate_number,
+  scheduled_at, note) + trang tenant `(tenant)/parking` (form biển số + `datetime-local`, danh
+  sách sắp tới/đã qua, nút Hủy cho đăng ký của mình) + tab "Gửi xe" trong tenant nav. Mỗi đăng ký
+  bắn `notifications` type `general` cho tất cả admin và hiện ở mục "Đăng ký gửi xe sắp tới" trên
+  dashboard admin. Không có bước duyệt, không có cột `status` — đây là thông báo trước để admin
+  sắp xếp chỗ, không phải luồng phê duyệt.
+- **Sửa bug danh sách hóa đơn trong `generate-invoice-section.tsx`**: component copy
+  `initialInvoices` vào `useState` nên hóa đơn vừa tạo/đánh dấu đã thanh toán không xuất hiện cho
+  tới khi reload. Bỏ state, đọc thẳng prop `invoices` (các action đều `revalidatePath` nên Next
+  tự đẩy danh sách mới xuống) — ít code hơn và luôn đúng.
+- **Dọn lệch docs/type**: alias `NotificationType` trong `types/database.ts` liệt kê
+  `invoice_issued`/`invoice_reminder` không tồn tại trong check constraint của DB → sửa cho khớp
+  0001 (`invoice_created`/`invoice_paid`/`general`); RLS.md cập nhật lại policy insert
+  `extra_fees` cho khớp migration 0004 (`declared`/`pending`).
+- **Kiểm tra**: `lint`/`typecheck`/`test` (20 test)/`build` đều sạch. RLS của
+  `parking_requests` test trực tiếp bằng psql với `request.jwt.claims` của tenant/admin thật:
+  tenant insert cho phòng mình OK, insert hộ phòng khác bị chặn, chỉ select/xoá được dòng phòng
+  mình, admin thấy tất cả. Constraint `billing_day` chặn 0 và 31.
+
+**Vì sao:** 4 yêu cầu của chủ dự án trong một lượt (mất nút trên mobile admin, ngày tính tiền
+theo phòng, trang đăng ký gửi xe cho tenant + thông báo ở dashboard admin, rà lỗi còn lại).
+Ngày chốt lưu ở `billing_config` (đã là bảng cấu hình 1-1 với phòng) thay vì bảng lịch riêng, và
+suy ra kỳ hóa đơn bằng pure function thay vì cron/job — không cần hạ tầng chạy nền cho MVP.
+**File liên quan:** `supabase/migrations/0006_billing_day_and_parking_requests.sql`,
+`lib/billing/billing-cycle.ts` (+ test), `types/database.ts`, `components/admin-mobile-menu.tsx`,
+`app/(admin)/layout.tsx`, `app/(admin)/dashboard/page.tsx`,
+`app/(admin)/billing-config/page.tsx`, `app/(admin)/billing-config/[roomId]/{page,actions,billing-config-form}`,
+`app/(admin)/rooms/[roomId]/{page.tsx,generate-invoice-section.tsx}`,
+`app/(tenant)/parking/*`, `components/tenant-nav.tsx`, `lib/utils.ts`,
+`docs/{SCHEMA,RLS,SERVER_ACTIONS,BILLING,NOTIFICATIONS}.md`.
+
 ## 2026-08-31 — Palette màu mới, tách thuế trong hóa đơn, tải PDF, dọn `router.refresh()` thừa
 
 - **Đổi palette màu** theo yêu cầu chủ dự án: chủ đạo `#546B41` (olive xanh rêu), phụ

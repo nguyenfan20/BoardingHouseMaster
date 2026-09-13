@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeBillingDay } from "@/lib/billing/billing-cycle";
 import type { WaterCalcType } from "@/types";
 
 export interface UpdateBillingConfigInput {
@@ -13,6 +14,8 @@ export interface UpdateBillingConfigInput {
   waterCalcType: WaterCalcType;
   waterRate: number;
   allowTenantMeterInput: boolean;
+  billingDay: number;
+  otherFees: { name: string; amount: number }[];
 }
 
 export interface UpdateBillingConfigResult {
@@ -34,6 +37,10 @@ export async function updateBillingConfig(
     };
   }
 
+  const cleanOtherFees = (input.otherFees ?? [])
+    .filter((f) => f.name.trim() && !isNaN(Number(f.amount)) && Number(f.amount) >= 0)
+    .map((f) => ({ name: f.name.trim(), amount: Number(f.amount) }));
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("billing_config")
@@ -45,6 +52,8 @@ export async function updateBillingConfig(
       water_calc_type: input.waterCalcType,
       water_rate: input.waterRate,
       allow_tenant_meter_input: input.allowTenantMeterInput,
+      billing_day: normalizeBillingDay(input.billingDay),
+      other_fees: cleanOtherFees,
       updated_at: new Date().toISOString(),
     })
     .eq("room_id", roomId);

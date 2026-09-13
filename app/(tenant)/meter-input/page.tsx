@@ -1,6 +1,7 @@
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatMonthLabel } from "@/lib/utils";
+import type { WaterCalcType } from "@/types";
 import { MeterInputForm } from "./meter-input-form";
 
 export const dynamic = "force-dynamic";
@@ -34,15 +35,39 @@ export default async function TenantMeterInputPage() {
     );
   }
 
-  const { data: meterReadings } = await supabase
-    .from("meter_readings")
-    .select("*")
-    .eq("room_id", roomId)
-    .eq("month", month);
+  // Fetch full history (last 12 months) for both tables in parallel
+  const [{ data: allMeterReadings }, { data: allWaterReadings }] = await Promise.all([
+    supabase
+      .from("meter_readings")
+      .select("*")
+      .eq("room_id", roomId)
+      .order("month", { ascending: false })
+      .limit(36), // dual meter = 2 rows/month → 36 covers 12 months
+    config.water_calc_type === "per_m3"
+      ? supabase
+          .from("water_readings")
+          .select("*")
+          .eq("room_id", roomId)
+          .order("month", { ascending: false })
+          .limit(12)
+      : Promise.resolve({ data: [] as never[] }),
+  ]);
 
-  const { data: waterReading } = config.water_calc_type === "per_m3"
-    ? await supabase.from("water_readings").select("*").eq("room_id", roomId).eq("month", month).maybeSingle()
-    : { data: null };
+  const meterReadings = allMeterReadings ?? [];
+  const waterReadings = allWaterReadings ?? [];
+
+  // Current month slice — passed to form inputs as default values
+  const currentMeterReadings = meterReadings.filter((r) => r.month === month);
+  const currentWaterReading = waterReadings.find((r) => r.month === month) ?? null;
+
+  // Determine if the current month is fully submitted
+  const hasElectricity = config.has_dual_meter
+    ? currentMeterReadings.some((r) => r.meter_type === "indoor") &&
+      currentMeterReadings.some((r) => r.meter_type === "outdoor")
+    : currentMeterReadings.some((r) => r.meter_type === "single");
+  const hasWater =
+    config.water_calc_type !== "per_m3" || currentWaterReading !== null;
+  const isCurrentMonthComplete = hasElectricity && hasWater;
 
   return (
     <div className="space-y-6">
@@ -52,13 +77,16 @@ export default async function TenantMeterInputPage() {
           Tháng {formatMonthLabel(month)}
         </p>
       </div>
-      <div className="rounded-lg border border-neutral-200 bg-white p-6">
+      <div className="rounded-xl border border-neutral-200 bg-white p-4 sm:p-6 shadow-sm">
         <MeterInputForm
           month={month}
           hasDualMeter={config.has_dual_meter}
-          waterCalcType={config.water_calc_type}
-          meterReadings={meterReadings ?? []}
-          waterReading={waterReading}
+          waterCalcType={config.water_calc_type as WaterCalcType}
+          currentMeterReadings={currentMeterReadings}
+          currentWaterReading={currentWaterReading}
+          isCurrentMonthComplete={isCurrentMonthComplete}
+          meterHistory={meterReadings}
+          waterHistory={waterReadings}
         />
       </div>
     </div>

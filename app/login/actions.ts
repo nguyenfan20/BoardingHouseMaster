@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { HOME_PATH_BY_ROLE } from "@/lib/auth";
+import type { UserRole } from "@/types";
 
 export interface SignInResult {
   success: boolean;
@@ -28,7 +29,7 @@ export async function signInWithPassword(email: string, password: string): Promi
     return { success: false, error: "Tài khoản chưa được thiết lập đầy đủ. Vui lòng liên hệ quản lý." };
   }
 
-  return { success: true, redirectTo: HOME_PATH_BY_ROLE[profile.role] };
+  return { success: true, redirectTo: HOME_PATH_BY_ROLE[profile.role as UserRole] };
 }
 
 export async function signOut() {

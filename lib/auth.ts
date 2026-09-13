@@ -27,7 +27,13 @@ export async function getCurrentProfile() {
   const { data: profile } = await supabase.from("users").select("role, room_id, full_name").eq("id", user.id).single();
   if (!profile) return null;
 
-  return { user, profile };
+  return {
+    user,
+    profile: {
+      ...profile,
+      role: profile.role as UserRole,
+    },
+  };
 }
 
 export async function requireRole(role: UserRole) {

@@ -11,7 +11,7 @@ export default async function AdminExtraFeesReviewPage() {
   const { data: fees } = await supabase
     .from("extra_fees")
     .select("*")
-    .eq("status", "pending")
+    .in("status", ["pending", "declared"])
     .order("created_at", { ascending: true });
 
   const roomIds = [...new Set((fees ?? []).map((f) => f.room_id))];

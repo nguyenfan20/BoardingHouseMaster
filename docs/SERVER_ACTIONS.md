@@ -35,6 +35,7 @@ xem RLS.md § Lưu ý triển khai).
 ## Admin — Billing config (`app/(admin)/billing-config/actions.ts`)
 - `updateBillingConfig(roomId, input)` — validate invariant: không cho
   `electricity_tax_percent > 0 && dual_meter_surcharge_percent > 0` cùng lúc (xem BILLING.md §2).
+  Bao gồm `billingDay` (ngày chốt tiền của phòng) — kẹp về 1..28 bằng `normalizeBillingDay()`.
 
 ## Admin — Bank info (`app/(admin)/bank-info/actions.ts`)
 - `upsertBankInfo(input)`
@@ -45,9 +46,13 @@ xem RLS.md § Lưu ý triển khai).
   + gọi `createNotification(...)` (xem NOTIFICATIONS.md).
 - `createExtraFeeAsAdmin(input)` — tạo thẳng `status = 'approved'`.
 
-## Admin — Meter & invoice
-- `upsertMeterReading(roomId, month, input)` — admin nhập/sửa chỉ số.
-- `upsertWaterReading(roomId, month, input)` — chỉ khi `water_calc_type = 'per_m3'`.
+## Admin — Meter & invoice (`app/(admin)/rooms/[roomId]/actions.ts`)
+- `upsertMeterReadingAsAdmin(roomId, month, meterType, oldIndex, newIndex)` — admin nhập/sửa chỉ số
+  điện, `recorded_by = 'admin'`, upsert theo `(room_id, month, meter_type)`. **Luôn khả dụng, không
+  phụ thuộc `allow_tenant_meter_input`** — cờ đó chỉ mở thêm quyền cho tenant. Validate
+  `newIndex >= oldIndex`. UI: mục "Chỉ số điện / nước" ở trang chi tiết phòng.
+- `upsertWaterReadingAsAdmin(roomId, month, oldIndex, newIndex)` — chỉ hiện khi
+  `water_calc_type = 'per_m3'`, upsert theo `(room_id, month)`.
 - `generateInvoice(roomId, month)` — chạy `lib/billing/generate-invoice.ts`, xem BILLING.md §7.
   Sau khi tạo mới (không phải update) → `createNotification` type `invoice_created` cho các user
   của phòng đó.
@@ -67,9 +72,19 @@ xem RLS.md § Lưu ý triển khai).
 - `listMyInvoices()`
 - `getInvoiceDetail(id)` — kèm `qr_url` để hiển thị QR.
 
+## Tenant — Gửi xe (`app/(tenant)/parking/actions.ts`)
+- `createParkingRequest(plateNumber, scheduledAt, note?)` — insert `parking_requests` cho phòng
+  của user hiện tại (`created_by = auth.uid()`), validate biển số + thời điểm phải ở tương lai,
+  rồi `createNotification` type `general` cho mọi admin (non-blocking).
+- `cancelParkingRequest(id)` — tenant tự hủy đăng ký của mình (RLS chặn xoá dòng của phòng khác).
+- Không có action riêng cho lịch sử/dọn dữ liệu: trang `(admin)/parking-requests` tự query và tự
+  xoá dòng quá 30 ngày trong Server Component (RLS cho admin xoá).
+
 ## Notifications (dùng chung, `app/notifications/actions.ts`)
-- `listMyNotifications()`
-- `markNotificationRead(id)`
+- `markNotificationRead(id)` — set `is_read = true` cho 1 thông báo (RLS chỉ cho sửa của chính mình).
+- `markAllNotificationsRead()` — set `is_read = true` cho mọi thông báo chưa đọc của user hiện tại.
+- Danh sách đọc thẳng trong Server Component `app/notifications/page.tsx` (RLS lọc theo user),
+  không cần action riêng. Badge số chưa đọc ở `components/notification-bell.tsx`.
 
 ## Auth (`app/login/actions.ts`)
 - `signInWithPassword(email, password)` — Supabase Auth, redirect theo role sau khi đăng nhập

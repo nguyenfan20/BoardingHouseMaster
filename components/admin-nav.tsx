@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/billing-config", label: "Cấu hình tính tiền" },
   { href: "/bank-info", label: "Ngân hàng" },
   { href: "/extra-fees-review", label: "Duyệt phụ phí" },
+  { href: "/parking-requests", label: "Lịch sử đăng ký xe" },
 ];
 
 export function AdminNav({ onNavigate }: { onNavigate?: () => void }) {

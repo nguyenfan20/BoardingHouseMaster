@@ -40,6 +40,7 @@ export async function createRoom(input: CreateRoomInput) {
     dual_meter_surcharge_percent: isMatBang ? 10 : 0,
     water_calc_type: input.waterCalcType,
     water_rate: input.waterRate,
+    other_fees: [],
   });
   if (cfgError) throw cfgError;
 
