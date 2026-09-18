@@ -24,7 +24,11 @@ export async function getCurrentProfile() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase.from("users").select("role, room_id, full_name").eq("id", user.id).single();
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role, room_id, full_name, phone")
+    .eq("id", user.id)
+    .single();
   if (!profile) return null;
 
   return {

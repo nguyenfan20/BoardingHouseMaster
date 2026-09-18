@@ -216,3 +216,11 @@ Thông báo cho tenant/admin khi extra_fee được duyệt/từ chối, hóa đ
 8. **`parking_requests` không có bước duyệt**: tenant đăng ký → admin thấy ngay ở dashboard +
    nhận `notifications` type `general`. Không thêm type notification mới để khỏi phải đổi
    check constraint của `notifications.type`.
+
+## Quyết định từ Q&A (2026-09-18, vòng 4 — hồ sơ tenant)
+
+9. **Tenant tự sửa `full_name`/`phone`, không thêm cột mới**: trang `/profile` chỉ cho sửa hai
+   field đã có sẵn trong `users` — không thêm CMND/địa chỉ/email vì chưa có yêu cầu cụ thể
+   (YAGNI). Email vẫn chỉ sửa được qua `auth.users` (ngoài phạm vi bảng này) nếu sau này cần.
+   RLS: migration `0007_users_tenant_self_update.sql` thêm policy cho tenant UPDATE dòng của
+   chính mình (xem docs/RLS.md § users).

@@ -80,6 +80,12 @@ xem RLS.md § Lưu ý triển khai).
 - Không có action riêng cho lịch sử/dọn dữ liệu: trang `(admin)/parking-requests` tự query và tự
   xoá dòng quá 30 ngày trong Server Component (RLS cho admin xoá).
 
+## Tenant — Hồ sơ (`app/(tenant)/profile/actions.ts`)
+- `updateMyProfile(fullName, phone)` — update `full_name`/`phone` của chính dòng `users` hiện
+  tại. Không nhận/ghi `role`/`room_id` (docs/RLS.md § users).
+- `changeMyPassword(currentPassword, newPassword)` — xác thực lại bằng `signInWithPassword`
+  trước (Supabase `updateUser` không tự hỏi mật khẩu cũ), rồi `supabase.auth.updateUser({ password })`.
+
 ## Notifications (dùng chung, `app/notifications/actions.ts`)
 - `markNotificationRead(id)` — set `is_read = true` cho 1 thông báo (RLS chỉ cho sửa của chính mình).
 - `markAllNotificationsRead()` — set `is_read = true` cho mọi thông báo chưa đọc của user hiện tại.

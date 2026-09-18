@@ -19,6 +19,28 @@ Format mỗi entry:
 
 ---
 
+## 2026-09-18 — Trang hồ sơ tenant: đổi mật khẩu + sửa thông tin cá nhân
+
+- Thêm `app/(tenant)/profile/` (page + actions + 2 form) — tenant tự sửa `full_name`/`phone` và
+  tự đổi mật khẩu, thêm mục "Hồ sơ" vào `components/tenant-nav.tsx`.
+- `updateMyProfile` ghi thẳng vào bảng `users` (cùng dòng admin đang query ở trang chi tiết
+  phòng) nên **admin thấy thông tin tenant vừa sửa ngay, không cần đồng bộ gì thêm** — đây vốn
+  là một query trực tiếp, không cache riêng.
+- Migration `0007_users_tenant_self_update.sql`: thêm RLS policy cho tenant UPDATE dòng `users`
+  của chính mình — trước đó chỉ admin UPDATE được. Không enforce whitelist cột ở DB (trigger),
+  theo đúng cách `notifications_update` đã làm: RLS là lớp phòng thủ thứ hai, Server Action chỉ
+  ghi đúng 2 field cho phép.
+- `changeMyPassword` phải tự `signInWithPassword` lại bằng mật khẩu hiện tại trước khi gọi
+  `auth.updateUser({password})`, vì Supabase không tự đòi mật khẩu cũ khi đổi.
+- Không thêm field CMND/địa chỉ/email — chưa có yêu cầu, schema `users` hiện chỉ có
+  `full_name`/`phone` (SCHEMA.md Quyết định #9).
+
+**Vì sao:** tenant trước đó không có nơi tự cập nhật thông tin/đổi mật khẩu sau khi admin tạo
+tài khoản qua link mời — phải nhờ admin sửa hộ trong Supabase Dashboard.
+**File liên quan:** `app/(tenant)/profile/`, `components/tenant-nav.tsx`, `lib/auth.ts`
+(`getCurrentProfile` giờ select thêm `phone`), `supabase/migrations/0007_users_tenant_self_update.sql`,
+`docs/SCHEMA.md`, `docs/RLS.md`, `docs/SERVER_ACTIONS.md`.
+
 ## 2026-09-13 — Admin nhập được chỉ số điện/nước (trước đó tắt quyền tenant là bế tắc)
 
 - **Lỗ hổng**: `billing_config.allow_tenant_meter_input = false` thì tenant không thấy trang nhập

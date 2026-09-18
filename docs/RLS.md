@@ -22,7 +22,11 @@ $$ language sql stable security definer;
 ## `users`
 
 - SELECT: admin xem tất cả; tenant chỉ xem chính mình (`id = auth.uid()`).
-- INSERT/UPDATE/DELETE: chỉ admin (tenant không tự đổi role/room_id của mình).
+- INSERT/DELETE: chỉ admin.
+- UPDATE: admin sửa mọi dòng; tenant sửa được dòng của chính mình (`id = auth.uid()`, migration
+  0007) — nhưng Server Action `updateMyProfile` (`app/(tenant)/profile/actions.ts`) chỉ ghi
+  `full_name`/`phone`, không bao giờ nhận `role`/`room_id` từ input, nên tenant không tự đổi
+  được hai field đó dù RLS không chặn ở mức cột (cùng cách tiếp cận với `notifications_update`).
 
 ## `rooms`
 
