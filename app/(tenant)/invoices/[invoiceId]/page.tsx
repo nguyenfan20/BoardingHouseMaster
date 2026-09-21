@@ -12,6 +12,13 @@ function formatVnd(amount: number) {
   return `${amount.toLocaleString("vi-VN")} đ`;
 }
 
+function electricityIndexLabel(electricity: InvoiceBreakdown["electricity"]) {
+  if (electricity.meterType === "single") {
+    return `${electricity.newIndex} - ${electricity.oldIndex}`;
+  }
+  return `trong nhà ${electricity.indoor.newIndex} - ${electricity.indoor.oldIndex}, ngoài trời ${electricity.outdoor.newIndex} - ${electricity.outdoor.oldIndex}`;
+}
+
 function electricityTaxLabel(breakdown: InvoiceBreakdown) {
   const isSurcharge = breakdown.electricity.meterType === "dual" && breakdown.electricity.surcharge > 0;
   if (isSurcharge) {
@@ -48,7 +55,7 @@ export default async function TenantInvoiceDetailPage({ params }: { params: Prom
           </Link>
           <h1 className="text-xl sm:text-2xl font-semibold text-neutral-900">Chi tiết hóa đơn</h1>
         </div>
-        <DownloadInvoiceButton />
+        <DownloadInvoiceButton fileName={`${room?.name ?? "hoa-don"}-${invoice.month.slice(0, 7)}`} />
       </div>
 
       {/* Toàn bộ khối dưới đây là nội dung được in khi bấm "Tải hóa đơn" — xem globals.css @media print. */}
@@ -65,7 +72,10 @@ export default async function TenantInvoiceDetailPage({ params }: { params: Prom
         <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_auto]">
           <dl className="space-y-2 text-sm">
             <Row label="Tiền phòng" value={formatVnd(breakdown.basePrice)} />
-            <Row label={`Tiền điện (${breakdown.electricity.consumedKwh} kWh)`} value={formatVnd(breakdown.electricity.electricity)} />
+            <Row
+              label={`Tiền điện (${breakdown.electricity.consumedKwh} kWh, ${electricityIndexLabel(breakdown.electricity)})`}
+              value={formatVnd(breakdown.electricity.electricity)}
+            />
             {tax.amount > 0 && <Row label={tax.label} value={formatVnd(tax.amount)} />}
             <Row label="Tiền nước" value={formatVnd(breakdown.water.water)} />
             {breakdown.otherFees?.items?.map((item, i) => (
@@ -84,7 +94,7 @@ export default async function TenantInvoiceDetailPage({ params }: { params: Prom
             <div className="flex flex-col items-center gap-2 rounded-lg bg-neutral-50 p-4 print:bg-white lg:w-56">
               {/* eslint-disable-next-line @next/next/no-img-element -- ảnh QR động từ VietQR, không phù hợp next/image */}
               <img src={invoice.qr_url} alt="Mã QR chuyển khoản" className="h-44 w-44 rounded-lg border border-neutral-200 bg-white" />
-              <p className="text-center text-xs text-neutral-600">Quét mã để chuyển khoản {formatVnd(invoice.total_amount)}</p>
+              <p className="text-center text-xs text-neutral-600">Quét mã QR để chuyển khoản</p>
             </div>
           )}
         </div>

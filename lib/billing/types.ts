@@ -9,6 +9,8 @@ export interface SingleMeterInput {
 
 export interface SingleMeterBreakdown {
   meterType: "single";
+  oldIndex: number;
+  newIndex: number;
   consumedKwh: number;
   electricity: number;
   tax: number;
@@ -25,6 +27,8 @@ export interface DualMeterInput {
 
 export interface DualMeterBreakdown {
   meterType: "dual";
+  indoor: { oldIndex: number; newIndex: number };
+  outdoor: { oldIndex: number; newIndex: number };
   consumedIndoor: number;
   consumedOutdoor: number;
   consumedKwh: number;

@@ -7,6 +7,7 @@
    app/(tenant)/invoices/[invoiceId]/page.tsx). Chỉ cần reset margin trang in ở đây. */
 @media print {
   @page {
-    margin: 16mm;
+    size: A5;
+    margin: 12mm;
   }
 }

@@ -16,7 +16,7 @@ tax           = electricity * (electricityTaxPercent / 100)
 totalElectric = electricity + tax
 ```
 
-Output breakdown: `{ consumedKwh, electricity, tax, totalElectric }`
+Output breakdown: `{ oldIndex, newIndex, consumedKwh, electricity, tax, totalElectric }`
 
 ## 2. Điện — 2 đồng hồ (`has_dual_meter = true`)
 
@@ -43,7 +43,7 @@ else:
 > với mỗi phòng, `electricity_tax_percent > 0` VÀ `dual_meter_surcharge_percent > 0` không được
 > đồng thời xảy ra. Nếu cả hai đều 0, tổng tiền điện = tiền điện gốc, không cộng gì thêm.
 
-Output breakdown: `{ consumedIndoor, consumedOutdoor, consumedKwh, electricity, surcharge, tax, totalElectric }`
+Output breakdown: `{ indoor: {oldIndex,newIndex}, outdoor: {oldIndex,newIndex}, consumedIndoor, consumedOutdoor, consumedKwh, electricity, surcharge, tax, totalElectric }`
 
 ## 3. Nước
 
@@ -111,7 +111,7 @@ generateInvoice(roomId, month):
   3. Nếu water_calc_type == 'per_m3': đọc water_readings của room+month
   4. Đọc extra_fees của room+month có status = 'approved'
   5. Tính theo mục 1-5 ở trên → breakdown, totalAmount
-  6. Build qr_url qua lib/vietqr.ts: amount=totalAmount, addInfo="Tien tro <room.name> <month>"
+  6. Build qr_url qua lib/vietqr.ts: amount=totalAmount, addInfo="Chuyen khoan qua QR"
   7. Upsert vào invoices theo (room_id, month):
      - nếu invoice cũ tồn tại và status = 'paid' → throw lỗi, không ghi đè
      - ngược lại → upsert breakdown/total_amount/qr_url, giữ status hiện có (không tự đổi paid→unpaid)

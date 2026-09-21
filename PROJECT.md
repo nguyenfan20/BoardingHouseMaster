@@ -191,7 +191,7 @@ xem chi tiết minh bạch, và để tránh sai lệch nếu sau này đổi `e
 4. Admin (hoặc cron tự động) chạy generate hóa đơn cho tháng đó:
    - Đọc `billing_config`, `meter_readings`, `water_readings`, `extra_fees` của room + month.
    - Tính theo công thức mục 5, build `breakdown` JSON.
-   - Build URL QR VietQR với `amount = total_amount`, `addInfo = "Tien tro <ten phong> <thang>"`.
+   - Build URL QR VietQR với `amount = total_amount`, `addInfo = "Chuyen khoan qua QR"`, template `qr_only` (không hiện thông tin người nhận).
    - Insert vào `invoices`.
 5. Tenant đăng nhập, xem hóa đơn tháng, quét QR chuyển khoản, admin cập nhật `status = 'paid'` thủ công (chưa có xác nhận tự động qua ngân hàng ở giai đoạn này).
 

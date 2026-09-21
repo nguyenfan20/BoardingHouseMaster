@@ -7,11 +7,11 @@ export interface BuildVietQrUrlInput {
   accountName: string;
   amount: number;
   addInfo: string;
-  template?: string; // mặc định "compact2"
+  template?: string; // mặc định "qr_only" — chỉ hiện mã QR, không hiện khung thông tin người nhận
 }
 
 export function buildVietQrUrl(input: BuildVietQrUrlInput): string {
-  const template = input.template ?? "compact2";
+  const template = input.template ?? "qr_only";
   const base = `https://img.vietqr.io/image/${input.bankCode}-${input.accountNo}-${template}.png`;
   const params = new URLSearchParams({
     amount: String(Math.round(input.amount)),

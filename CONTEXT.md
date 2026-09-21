@@ -19,6 +19,39 @@ Format mỗi entry:
 
 ---
 
+## 2026-09-21 — Hóa đơn tenant: hiện chỉ số điện, QR gọn hơn, in A5
+
+- Trang `app/(tenant)/invoices/[invoiceId]/page.tsx`: dòng "Tiền điện" hiện thêm
+  `(chỉ số mới - chỉ số cũ)` — 1 đồng hồ hiện `newIndex - oldIndex`, 2 đồng hồ hiện cả
+  trong nhà lẫn ngoài trời. Thêm `oldIndex`/`newIndex` (và `indoor`/`outdoor`) vào
+  `SingleMeterBreakdown`/`DualMeterBreakdown` (`lib/billing/types.ts`,
+  `lib/billing/calculate-electricity.ts`) để có dữ liệu hiển thị — không đổi công thức tính tiền,
+  chỉ pass-through input gốc vào output. Đã cập nhật `docs/BILLING.md` §1-2.
+- `lib/vietqr.ts`: đổi template mặc định `compact2` → `qr_only` — VietQR không còn vẽ khung tên
+  người nhận/số tài khoản đè lên ảnh QR (ảnh cũ bị chê "xấu"). `accountName` vẫn được gửi vì đó là
+  dữ liệu mã hoá trong QR (ngân hàng đọc khi quét), chỉ là không hiển thị trên ảnh nữa.
+- `addInfo` khi build QR đổi từ `"Tien tro <ten phong> <thang>"` thành cố định
+  `"Chuyen khoan qua QR"` (`app/(admin)/rooms/[roomId]/actions.ts`) — nội dung chuyển khoản bên
+  ngân hàng không còn lộ "tiền trọ".
+- CSS in (`app/globals.css`) đổi `@page` sang khổ A5.
+- Nút "Tải hóa đơn (PDF)" tạm đổi `document.title` thành `<tên phòng>-<tháng>` trước khi
+  `window.print()` (khôi phục lại sau khi in xong qua sự kiện `afterprint`) — trình duyệt dùng
+  `document.title` làm tên file gợi ý khi chọn "Save as PDF".
+
+**Vì sao:** ảnh QR mặc định của VietQR (template `compact2`) vẽ thêm khung tên/số tài khoản trông
+rối; nội dung chuyển khoản cũ để lộ "tiền trọ" không mong muốn; tenant cần thấy chỉ số điện cũ/mới
+để đối chiếu công tơ; hóa đơn tải về cần gọn (A5) và tên file rõ ràng để tenant lưu trữ theo
+phòng/tháng.
+**Lưu ý còn hạn chế:** phần header/footer mặc định của trình duyệt khi in (URL, ngày giờ, số
+trang) là tuỳ chọn "Headers and footers" trong hộp thoại in của trình duyệt, trang web không có
+API để tự tắt — tenant cần bỏ tick mục đó khi in nếu muốn PDF sạch hoàn toàn.
+**File liên quan:** `app/(tenant)/invoices/[invoiceId]/page.tsx`,
+`app/(tenant)/invoices/[invoiceId]/download-invoice-button.tsx`, `lib/vietqr.ts`,
+`lib/billing/types.ts`, `lib/billing/calculate-electricity.ts`,
+`app/(admin)/rooms/[roomId]/actions.ts`, `app/globals.css`, `docs/BILLING.md`, `PROJECT.md`
+
+---
+
 ## 2026-09-18 — Trang hồ sơ tenant: đổi mật khẩu + sửa thông tin cá nhân
 
 - Thêm `app/(tenant)/profile/` (page + actions + 2 form) — tenant tự sửa `full_name`/`phone` và

@@ -16,6 +16,8 @@ export function calculateSingleMeterElectricity(
 
   return {
     meterType: "single",
+    oldIndex: input.oldIndex,
+    newIndex: input.newIndex,
     consumedKwh,
     electricity,
     tax,
@@ -43,6 +45,8 @@ export function calculateDualMeterElectricity(
 
   return {
     meterType: "dual",
+    indoor: input.indoor,
+    outdoor: input.outdoor,
     consumedIndoor,
     consumedOutdoor,
     consumedKwh,

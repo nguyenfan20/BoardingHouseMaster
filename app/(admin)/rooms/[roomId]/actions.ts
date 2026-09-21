@@ -247,7 +247,7 @@ export async function generateInvoiceForRoom(roomId: string, month: string): Pro
         accountNo: bankInfo.account_no,
         accountName: bankInfo.account_name,
         amount: breakdown.totalAmount,
-        addInfo: `Tien tro ${room.name} ${month.slice(0, 7)}`,
+        addInfo: "Chuyen khoan qua QR",
       })
     : null;
 
