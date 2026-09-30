@@ -2,6 +2,19 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { billingMonthFor } from "@/lib/billing/billing-cycle";
 import { formatDateTimeLabel, formatMonthLabel } from "@/lib/utils";
+import { MiniBarChart } from "@/components/tenant-dashboard-charts";
+import type { InvoiceBreakdown } from "@/lib/billing/types";
+
+const CHART_MONTHS = 6;
+
+/** `n` tháng liên tiếp kết thúc ở `endMonth` (YYYY-MM-01), cũ → mới. */
+function monthsEndingAt(endMonth: string, n: number): string[] {
+  const [y, m] = endMonth.split("-").map(Number);
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(y, m - 1 - (n - 1 - i), 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  });
+}
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +26,7 @@ export default async function AdminDashboardPage() {
     { data: rooms },
     { data: configs },
     { data: invoices },
+    { data: recentInvoices },
     { count: unpaidCount },
     { count: pendingFeeCount },
     { data: parkingRequests },
@@ -20,6 +34,11 @@ export default async function AdminDashboardPage() {
     supabase.from("rooms").select("id, name").eq("is_active", true).order("created_at", { ascending: true }),
     supabase.from("billing_config").select("room_id, billing_day"),
     supabase.from("invoices").select("room_id, month"),
+    supabase
+      .from("invoices")
+      .select("month, status, total_amount, breakdown")
+      .order("month", { ascending: false })
+      .limit(200),
     supabase.from("invoices").select("*", { count: "exact", head: true }).eq("status", "unpaid"),
     supabase.from("extra_fees").select("*", { count: "exact", head: true }).in("status", ["pending", "declared"]),
     supabase
@@ -43,6 +62,21 @@ export default async function AdminDashboardPage() {
     })
     .filter((room) => !invoiceMonths.has(`${room.id}:${room.month}`));
 
+  // ── Dữ liệu chart: cửa sổ `CHART_MONTHS` tháng kết thúc ở tháng có hóa đơn mới nhất ──
+  const latestMonth = recentInvoices?.[0]?.month ?? billingMonthFor(1);
+  const months = monthsEndingAt(latestMonth, CHART_MONTHS);
+  const revenueByMonth = new Map<string, number>();
+  const kwhByMonth = new Map<string, number>();
+  for (const inv of recentInvoices ?? []) {
+    revenueByMonth.set(inv.month, (revenueByMonth.get(inv.month) ?? 0) + inv.total_amount);
+    const kwh = (inv.breakdown as unknown as InvoiceBreakdown).electricity.consumedKwh;
+    kwhByMonth.set(inv.month, (kwhByMonth.get(inv.month) ?? 0) + kwh);
+  }
+  const latestInvoices = (recentInvoices ?? []).filter((inv) => inv.month === latestMonth);
+  const paidAmount = latestInvoices.filter((i) => i.status === "paid").reduce((sum, i) => sum + i.total_amount, 0);
+  const totalAmount = latestInvoices.reduce((sum, i) => sum + i.total_amount, 0);
+  const paidPct = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
+
   const stats = [
     { label: "Phòng đang hoạt động", value: rooms?.length ?? 0, href: "/rooms" },
     { label: "Hóa đơn chưa thanh toán", value: unpaidCount ?? 0, href: "/rooms" },
@@ -65,6 +99,43 @@ export default async function AdminDashboardPage() {
             <p className="mt-2 text-3xl font-semibold text-brand-700">{stat.value}</p>
           </Link>
         ))}
+      </div>
+
+      {/* Chart trực quan hóa: doanh thu, điện tiêu thụ, tiến độ thu tiền */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <MiniBarChart
+          data={{
+            label: `Tổng tiền hóa đơn ${CHART_MONTHS} tháng gần nhất (nghìn đ)`,
+            items: months.map((month) => ({ month, value: Math.round((revenueByMonth.get(month) ?? 0) / 1000) })),
+            unit: "nghìn đ",
+            barColor: "bg-brand-500",
+          }}
+        />
+        <MiniBarChart
+          data={{
+            label: `Điện tiêu thụ toàn nhà ${CHART_MONTHS} tháng gần nhất`,
+            items: months.map((month) => ({ month, value: Math.round(kwhByMonth.get(month) ?? 0) })),
+            unit: "kWh",
+            barColor: "bg-info-600",
+          }}
+        />
+        <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-neutral-600">Tiến độ thu tiền · Tháng {formatMonthLabel(latestMonth)}</p>
+          {latestInvoices.length === 0 ? (
+            <p className="mt-4 text-sm text-neutral-400">Chưa có dữ liệu</p>
+          ) : (
+            <>
+              <p className="mt-1 text-2xl font-bold text-neutral-900">{paidPct}%</p>
+              <div className="mt-3 h-3 overflow-hidden rounded-full bg-warning-50">
+                <div className="h-full rounded-full bg-brand-500 transition-all duration-500" style={{ width: `${paidPct}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-neutral-600">
+                Đã thu {paidAmount.toLocaleString("vi-VN")} đ / {totalAmount.toLocaleString("vi-VN")} đ ·{" "}
+                {latestInvoices.filter((i) => i.status === "paid").length}/{latestInvoices.length} hóa đơn
+              </p>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Đăng ký gửi xe của tenant — để admin sắp xếp chỗ trước */}

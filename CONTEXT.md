@@ -19,6 +19,29 @@ Format mỗi entry:
 
 ---
 
+## 2026-09-30 — Chart trên dashboard admin
+
+- `app/(admin)/dashboard/page.tsx` thêm 3 chart: tổng tiền hóa đơn 6 tháng, điện tiêu thụ (kWh) toàn nhà 6 tháng, tiến độ thu tiền của tháng có hóa đơn mới nhất. Tái dùng `MiniBarChart` của tenant (CSS thuần), không thêm thư viện.
+- Cửa sổ 6 tháng kết thúc ở tháng có hóa đơn mới nhất (không phải tháng hiện tại) vì kỳ hóa đơn thường là tháng trước; tháng thiếu dữ liệu hiện 0.
+
+**Vì sao:** admin cần nhìn nhanh xu hướng doanh thu/điện và còn bao nhiêu tiền chưa thu.
+**File liên quan:** `app/(admin)/dashboard/page.tsx`.
+
+---
+
+## 2026-09-30 — Admin xem hóa đơn + gửi cho tenant chưa xem
+
+- Trang mới `/room-invoices` (menu "Hóa đơn"): danh sách hóa đơn mọi phòng, hiện "Đã xem X/Y" và nút **Gửi** khi còn tenant chưa xem; `/room-invoices/[invoiceId]` xem chi tiết.
+- "Đã xem" = tenant có thông báo của hóa đơn đó với `is_read = true`. Trang chi tiết hóa đơn tenant giờ tự đánh dấu đã đọc các thông báo của hóa đơn khi mở (trước đây chỉ đánh dấu khi bấm từ danh sách thông báo).
+- Server Action `sendInvoiceToUnseenTenants` tạo thêm thông báo `invoice_created` cho tenant chưa xem (không thêm cột/bảng/migration mới, không gửi email/Zalo).
+- Tách `components/invoice-card.tsx` dùng chung cho tenant và admin. Thông báo hóa đơn của admin giờ trỏ tới `/room-invoices/[id]` thay vì `/rooms`.
+- Route admin đặt `/room-invoices` vì `/invoices` đã là của tenant (route group cùng chung URL).
+
+**Vì sao:** admin cần nhắc tenant chưa xem hóa đơn mà không phải nhắn ngoài app; tận dụng `notifications` sẵn có thay vì thêm bảng theo dõi. Admin đọc thông báo của người khác bằng service role vì RLS chỉ cho xem của chính mình.
+**File liên quan:** `app/(admin)/room-invoices/`, `components/invoice-card.tsx`, `components/admin-nav.tsx`, `app/(tenant)/invoices/[invoiceId]/page.tsx`, `app/notifications/page.tsx`.
+
+---
+
 ## 2026-09-21 — Hóa đơn tenant: hiện chỉ số điện, QR gọn hơn, in A5
 
 - Trang `app/(tenant)/invoices/[invoiceId]/page.tsx`: dòng "Tiền điện" hiện thêm

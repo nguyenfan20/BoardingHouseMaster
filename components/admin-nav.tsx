@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Tổng quan" },
   { href: "/rooms", label: "Phòng trọ" },
+  { href: "/room-invoices", label: "Hóa đơn" },
   { href: "/billing-config", label: "Cấu hình tính tiền" },
   { href: "/bank-info", label: "Ngân hàng" },
   { href: "/extra-fees-review", label: "Duyệt phụ phí" },

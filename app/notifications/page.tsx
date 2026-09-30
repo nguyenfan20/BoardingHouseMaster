@@ -19,7 +19,7 @@ function targetHref(
     case "extra_fees":
       return role === "admin" ? "/extra-fees-review" : "/extra-fees";
     case "invoices":
-      return role === "admin" ? "/rooms" : relatedId ? `/invoices/${relatedId}` : "/invoices";
+      return role === "admin" ? (relatedId ? `/room-invoices/${relatedId}` : "/room-invoices") : relatedId ? `/invoices/${relatedId}` : "/invoices";
     case "parking_requests":
       return role === "admin" ? "/dashboard" : "/parking";
     default:
