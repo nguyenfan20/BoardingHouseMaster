@@ -256,7 +256,7 @@ export function BillingConfigForm({ roomId, config }: { roomId: string; config: 
       <div className="space-y-2 rounded-xl border border-neutral-200 bg-white p-4 sm:p-5">
         <h3 className="font-semibold text-neutral-900">4. Ngày chốt tiền / lập hóa đơn</h3>
         <p className="text-xs text-neutral-500">
-          Ngày trong tháng mà phòng này được chốt chỉ số và lập hóa đơn (1–28). Trước ngày này, hóa
+          Ngày trong tháng mà phòng này được chốt chỉ số và lập hóa đơn (1–31). Trước ngày này, hóa
           đơn mặc định vẫn là kỳ của tháng trước; từ ngày này trở đi, Tổng quan sẽ nhắc tạo hóa đơn
           cho phòng.
         </p>
@@ -266,7 +266,7 @@ export function BillingConfigForm({ roomId, config }: { roomId: string; config: 
           label="Ngày chốt hằng tháng"
           type="number"
           min={1}
-          max={28}
+          max={31}
           step={1}
           defaultValue={config.billing_day}
           required

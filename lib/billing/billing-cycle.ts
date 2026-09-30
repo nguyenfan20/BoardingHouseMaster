@@ -1,10 +1,10 @@
 // Kỳ tính tiền theo "ngày chốt" riêng của từng phòng (billing_config.billing_day).
 // Pure function, có unit test — xem docs/BILLING.md § Kỳ tính tiền.
 
-/** Chuẩn hoá billing_day về 1..28 (tháng 2 cũng luôn có ngày này). */
+/** Chuẩn hoá billing_day về 1..31. */
 export function normalizeBillingDay(day: number): number {
   if (!Number.isFinite(day)) return 1;
-  return Math.min(28, Math.max(1, Math.trunc(day)));
+  return Math.min(31, Math.max(1, Math.trunc(day)));
 }
 
 /**
@@ -20,9 +20,15 @@ export function billingMonthFor(billingDay: number, today = new Date()): string 
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
-/** Ngày chốt của kỳ hiện tại (để hiển thị "đã tới ngày chốt từ ..."). */
+/**
+ * Ngày chốt của kỳ hiện tại (để hiển thị "đã tới ngày chốt từ ...").
+ * Nếu tháng không có đủ ngày (VD: tháng 2 chỉ có 28/29 ngày), dùng ngày cuối tháng.
+ */
 export function billingCycleDate(billingDay: number, today = new Date()): Date {
   const month = billingMonthFor(billingDay, today);
   const [y, m] = month.split("-").map(Number);
-  return new Date(y, m - 1, normalizeBillingDay(billingDay));
+  const day = normalizeBillingDay(billingDay);
+  // Số ngày thực tế của tháng (month 0-based: new Date(y, m, 0).getDate())
+  const daysInMonth = new Date(y, m, 0).getDate();
+  return new Date(y, m - 1, Math.min(day, daysInMonth));
 }
